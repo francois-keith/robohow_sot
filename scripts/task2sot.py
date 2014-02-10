@@ -22,7 +22,7 @@ def vector3ToStr(vec):
 def runCommand(proxy, instruction):
     rospy.loginfo ("run instruction: " + instruction)
     result = proxy (instruction)
-    rospy.loginfo ("stdout: " + result.stdout)
+#    rospy.loginfo ("stdout: " + result.stdout)
     rospy.loginfo ("stderr: " + result.stderr)
 
 """ create the feature """
@@ -48,22 +48,37 @@ def createFeature(proxy, feat):
 
 """ create the task, push it into the sot """
 def createConstraint(proxy, command):
+  if command.function == 'transformation':
+    bounds = "lowerBound = (0, 0, 0, 0, 0, 0,), upperBound  = (0.1, 0, 0, 0, 0, 0)"
+  elif command.function == 'position':
+    bounds = "lowerBound = (0, 0, 0, 0, 0, 0,), upperBound  = (0.1, 0, 0, 0, 0, 0)"
+  else:
+    bounds = "lowerBound = (0,), upperBound  = (0.1,)"
+
   instruction = "createTask(robot,'" + command.name + "', '" + command.tool_feature.name + "', " +\
                 "'" + command.world_feature.name+"', '"+command.function+"', " +\
-                "lowerBound = (0), upperBound  = (0))"
+                bounds  +")"
   runCommand(proxy, instruction)
 
+
   # push the task in the solver
-  instruction = "solver.push(robot.tasks['"+command.name+"'])"
-  runCommand(proxy, instruction)
+  #instruction = "solver.push(robot.tasks['"+command.name+"'])"
+  #runCommand(proxy, instruction)
 
 
 def convertContraintToCommands(proxy, constraints):
+#  taskList = '['
+  runCommand(proxy, "superviser.clear()")
   for c in constraints:
-    rospy.loginfo(": Working the constraint %s, %s" % (c.name, c.function))
-    createFeature(proxy, c.tool_feature)
-    createFeature(proxy, c.world_feature)
-    createConstraint(proxy, c)
+    # if the type of the task is other, we assume that the task 
+    #  has been created in the SoT / does ot depend on expression-graph system.
+    if c.function != 'other':    
+      rospy.loginfo(": Working the constraint %s, %s" % (c.name, c.function))
+      createFeature(proxy, c.tool_feature)
+      createFeature(proxy, c.world_feature)
+      createConstraint(proxy, c)
+    runCommand(proxy, "superviser.push('" + c.name +"')")
+  runCommand(proxy, "superviser.update()")
 
 #uint8 ANGLE=0			# computes the angle between the two features
 #uint8 DISTANCE=1	# computes the distance between the two features
@@ -85,6 +100,7 @@ class Listener:
         rospy.init_node('listener', anonymous=True)
 
         # Wait for the run_command service to be started
+        rospy.loginfo("\n " + rospy.get_name() + " waiting for run_command")
         rospy.wait_for_service ('run_command')
         rospy.loginfo(rospy.get_name() + "run_command obtained")
         self.run_command = rospy.ServiceProxy ('run_command', RunCommand)
