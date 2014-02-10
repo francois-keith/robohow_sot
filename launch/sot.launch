@@ -1,0 +1,7 @@
+<launch>
+  <!-- convert the tasks into sot tasks -->
+  <node name="taskConverter" pkg="constraint2sot" type="task2sot.py"/>
+
+  <!-- convert the parameters into sot instructions -->
+  <node name="paramConverter" pkg="constraint2sot" type="taskParameter2sot.py"/>
+</launch>
