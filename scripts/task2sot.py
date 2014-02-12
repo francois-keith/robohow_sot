@@ -1,29 +1,77 @@
 #!/usr/bin/env python
 import roslib
-roslib.load_manifest('constraint_msgs')
+roslib.load_manifest('robohow_common_msgs')
 import rospy
 import actionlib
 
-from constraint_msgs.msg import ConstraintConfig, Constraint, Feature
+from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature
+
+roslib.load_manifest('constraint2sot')
 
 roslib.load_manifest('dynamic_graph_actionlib')
 from dynamic_graph_actionlib.msg import *
 
 roslib.load_manifest ('dynamic_graph_bridge')
-#roslib.load_manifest('openhrp_bridge')
 from dynamic_graph_bridge.srv import RunCommand
+
+
+## Common part
 
 """ convert a vector3 to a string """
 def vector3ToStr(vec):
     st = "(%f, %f, %f)" % (vec.x, vec.y, vec.z)
     return st;
 
+def vectorToStr(vec):
+    rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
+    st = '('
+    for i in range(0, len(vec)):
+      s = "%f, " % vec[i]
+      st = st + s
+    st = st + ')'
+    return st
+
 """ run an inscruction """
 def runCommand(proxy, instruction):
-    rospy.loginfo ("run instruction: " + instruction)
+#    rospy.logdebug ("run instruction: " + instruction)
     result = proxy (instruction)
 #    rospy.loginfo ("stdout: " + result.stdout)
-    rospy.loginfo ("stderr: " + result.stderr)
+#    rospy.loginfo ("stderr: " + result.stderr)
+
+
+""" create the task, push it into the sot """
+def createConstraint(proxy, command):
+  instruction = "createTask(robot,'" + command.name + "', '" + command.tool_feature.name + "', " +\
+                "'" + command.world_feature.name+"', '"+command.function+"', " +\
+                "lowerBound = (0), upperBound  = (0))"
+  runCommand(proxy, instruction)
+
+  # push the task in the solver
+  instruction = "solver.push(robot.tasks['"+command.name+"'])"
+  runCommand(proxy, instruction)
+
+
+def parameterizeContraint(proxy, c):
+  rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
+  instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
+    vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
+    "'" + c.selec + "'" + ")"
+  runCommand(proxy, instruction)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 """ create the feature """
 def createFeature(proxy, feat):
@@ -60,7 +108,6 @@ def createConstraint(proxy, command):
                 bounds  +")"
   runCommand(proxy, instruction)
 
-
   # push the task in the solver
   #instruction = "solver.push(robot.tasks['"+command.name+"'])"
   #runCommand(proxy, instruction)
@@ -77,8 +124,17 @@ def convertContraintToCommands(proxy, constraints):
       createFeature(proxy, c.tool_feature)
       createFeature(proxy, c.world_feature)
       createConstraint(proxy, c)
+      parameterizeContraint(proxy, c.command)
+
     runCommand(proxy, "superviser.push('" + c.name +"')")
+  runCommand(proxy, "ros.rosPublish.clear()")
+
   runCommand(proxy, "superviser.update()")
+  for c in constraints:
+    if c.function != 'other':    
+      instruction = "startPublishingError(ros, robot.tasks['" + c.name + "'])"
+      runCommand(proxy, instruction)
+
 
 #uint8 ANGLE=0			# computes the angle between the two features
 #uint8 DISTANCE=1	# computes the distance between the two features

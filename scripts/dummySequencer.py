@@ -106,15 +106,15 @@ stack.append(constraints['robot_task_position'])
 #stack.append(Constraint('dist', 'distance', r_gripper ,   l_gripper))
 #stack.append(Constraint('angle', 'angle',   r_gripper_z , l_gripper_z))
 
-constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', 'angle', r_gripper_uz, bottle_z)
 # TODO angle_gripperZ_bottleZ =  'angle', lowerBound = radians(180), upperBound = radians(180))
 parameters['angle_gripperZ_bottleZ']  = ConstraintCommand(\
-  'angle_gripperZ_bottleZ', 0, [radians(180)], [radians(180)], [1], '')
+  'angle_gripperZ_bottleZ', 0, [radians(180)], [radians(180)], '', [1])
+constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', 'angle', r_gripper_uz, bottle_z, parameters['angle_gripperZ_bottleZ'] )
 
 
-constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', 'position', r_gripper, bottle)
 parameters['position_gripper_bottle']  = ConstraintCommand(\
-  'position_gripper_bottle', 0, [0.1, 0, 0], [0.1, 0, 0], [1], '111')
+  'position_gripper_bottle', 0, [0.1, 0, 0], [0.1, 0, 0], '111', [1])
+constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', 'position', r_gripper, bottle, parameters['position_gripper_bottle'])
 # lowerBound = (0,), upperBound = (0,),)
 #    robot.features['position-gripper_bottle'].selec.value ='111' 
 #    robot.features['position-gripper_bottle'].reference.value = (0.1, 0, 0)
@@ -123,23 +123,23 @@ parameters['position_gripper_bottle']  = ConstraintCommand(\
     # Constrain the rotation of the bottle for the pouring task : 
     # 90* => the Z axis of the world and the Z axis of the bottle are colinear
     #  0* => the bottle is horizontal
-constraints['angle_pouring'] = Constraint('angle_pouring', 'angle', bung_x, ground_z)
 parameters['angle_pouring'] = ConstraintCommand(\
-  'angle_pouring', 0, [radians(90)], [radians(90)], [], '')
+  'angle_pouring', 0, [radians(90)], [radians(90)], '', [])
+constraints['angle_pouring'] = Constraint('angle_pouring', 'angle', bung_x, ground_z, parameters['angle_pouring'])
 #    createTask(robot, 'angle-pouring', 'bung_x', 'ground_z', 'angle', lowerBound = (radians(90)), upperBound = (radians(90)))
 
 
 
     # Constrain the rotation of the gripper to keep the hand horizontal 
-constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  'angle',  ground_plane, r_gripper_y)
 parameters['angle_gripperY_in_ground_plane'] = angle_gripperY_in_ground_plane_Param = ConstraintCommand(\
-  'angle_gripperY_in_ground_plane', 0, [radians(0)], [radians(0)], [], '')
+  'angle_gripperY_in_ground_plane', 0, [radians(0)], [radians(0)], '', [])
+constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  'angle',  ground_plane, r_gripper_y, parameters['angle_gripperY_in_ground_plane'])
 #angle_gripperY_in_ground_plane = createTask(robot, 'angle_gripperY_in_ground_plane',  'angle',  ground_plane, r_gripper_y,lowerBound = (0), upperBound = (0))
 
     # Distance bottle / r_hand
-constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', 'distance', r_gripper, bottle)
 parameters['distance_bottle_gripper'] = ConstraintCommand(\
-  'distance_bottle_gripper', 0, [radians(0)], [radians(0)], [], '')
+  'distance_bottle_gripper', 0, [radians(0)], [radians(0)], '', [])
+constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', 'distance', r_gripper, bottle, parameters['distance_bottle_gripper'])
 #distance_bottle_gripper = createTask('distance_bottle_gripper', 'distance', r_gripper, bottle, lowerBound = (0), upperBound = (0))
 
 
@@ -147,9 +147,9 @@ parameters['distance_bottle_gripper'] = ConstraintCommand(\
     # ---- TASKS corresponding the manipulation of the bottle ---
     ################################ #######################
     ## height of the bottle above the target
-constraints['position_Z_bung'] = Constraint('position_bung_Z', 'position', bung, cup)
 parameters['position_bung_Z'] = ConstraintCommand(\
-  'position_bung_Z', 0, [-0.05], [-0.05], [], '100')
+  'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
+constraints['position_Z_bung'] = Constraint('position_bung_Z', 'position', bung, cup, parameters['position_bung_Z'])
 # position_bung_Z = createTask('position_bung_Z', 'position', 'bung', 'cup', lowerBound = (0,), upperBound = (0,))
 #    robot.features['position_bung_Z'].selec.value ='100' #TODO
 #    robot.features['position_bung_Z'].reference.value = (-0.05,)
@@ -157,18 +157,18 @@ parameters['position_bung_Z'] = ConstraintCommand(\
 
 
     #######################################################
-constraints['position_rg_XY'] = Constraint('position_rg_XY', 'distance', cup, r_gripper)
 parameters['position_rg_XY'] = ConstraintCommand(\
-  'position_rg_XY', 0, [0.02], [100], [], '')
+  'position_rg_XY', 0, [0.02], [100], '', [])
+constraints['position_rg_XY'] = Constraint('position_rg_XY', 'distance', cup, r_gripper, parameters['position_rg_XY'])
 #    createTask(robot, 'position-rg_XY', 'cup', 'r_gripper', 'distance', lowerBound = (0.02,), upperBound = (100,))
 
 
     #######################################################
     ## position of the bottle above the target.
     ## inequality task: we want the bottle to be above the recipient
-constraints['position_bung_XY'] = Constraint('position_bung_XY', 'position', cup, bung)
 parameters['position_bung_XY'] = ConstraintCommand(\
-  'position_bung_XY', 0, [-0.025,-0.025], [ 0.025, 0.025], [], '011')
+  'position_bung_XY', 0, [-0.025,-0.025], [ 0.025, 0.025], '011', [])
+constraints['position_bung_XY'] = Constraint('position_bung_XY', 'position', cup, bung, parameters['position_bung_XY'])
 
 #    createTask(robot, 'position_bung_XY', 'cup', 'bung', 'position', lowerBound = (0,0,), upperBound = (0,1,))
 #    robot.features['position_bung_XY'].selec.value = '011'
@@ -179,17 +179,17 @@ parameters['position_bung_XY'] = ConstraintCommand(\
     # ---- TASKS corresponding the manipulation of the bottle ---
     ################################ #######################
     ## height of the bottle above the target
-constraints['position_bung_Z'] = Constraint('position_bung_Z', 'position', bung, cup)
 parameters['position_bung_Z'] = ConstraintCommand(\
-  'position_bung_Z', 0, [-0.05], [-0.05], [], '100')
+  'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
+constraints['position_bung_Z'] = Constraint('position_bung_Z', 'position', bung, cup, parameters['position_bung_Z'])
 
 #position_bung_Z = createTask('position_bung_Z', 'bung', 'cup', 'position', lowerBound = (0,), upperBound = (0,))
 #    robot.features['position_bung_Z'].selec.value ='100' #TODO
 #    robot.features['position_bung_Z'].reference.value = (-0.05,)
 #    setTaskGoal(robot, 'position_bung_Z', (-0.05,), (-0.05,))
 
-constraints['tips'] = Constraint('tips', 'angle', ground_x, r_gripper_y)
-parameters['tips']  = ConstraintCommand('tips', 0, [2.5], [2.5], [], '')
+parameters['tips']  = ConstraintCommand('tips', 0, [2.5], [2.5], '', [])
+constraints['tips'] = Constraint('tips', 'angle', ground_x, r_gripper_y, parameters['tips'] )
 
 
 ##     ################################ #######################
@@ -229,12 +229,12 @@ class DummySequencer:
   def __init__(self, pubStack, pubParam):
     rospy.loginfo('init')
     self.pubStack = pubStack
-    self.pubParam = pubParam
+    #self.pubParam = pubParam
 
   # graps
   def _step0(self):
     print "going in front of the bottle"
-#    self.steps.append(Step(add=['position_gripper_bottle', 'angle_gripperZ_bottleZ'], rm=[]))
+#    self.steps.Step(append(add=['position_gripper_bottle', 'angle_gripperZ_bottleZ'], rm=[]))
     stack.remove(constraints['robot_task_position'])
     stack.append(constraints['position_gripper_bottle'])
     stack.append(constraints['angle_gripperZ_bottleZ'])
@@ -387,24 +387,12 @@ class DummySequencer:
 
     # publishes the param for each task in the SOT
     # todo: wait for the confirmation that the pubStack has been realized.
-    rospy.sleep(0.05)
-    for task in stack:
-      rospy.loginfo('in the sot: ' + task.name)
-      if task.function != 'other':
-        self.pubParam.publish(parameters[task.name])
-        rospy.loginfo('param: ' + task.name)
-
-#  def seqStep(self):
-#    if self.stepIndex < len(self.steps):
-#      for name in self.steps[self.stepIndex].rm:
-#        self.solver.remove(self.robot.tasks[name])
-#      for name in self.steps[self.stepIndex].add:
-#        self.solver.push(self.robot.tasks[name])
-#      self.stepIndex = self.stepIndex + 1
-
-
-
-rospy.loginfo('lol')
+#    rospy.sleep(0.05)
+#    for task in stack:
+#      rospy.loginfo('in the sot: ' + task.name)
+#      if task.function != 'other':
+#        self.pubParam.publish(parameters[task.name])
+#        rospy.loginfo('param: ' + task.name)
 
 if __name__ == '__main__':
   ## OK, let's go!

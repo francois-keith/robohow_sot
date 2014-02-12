@@ -13,6 +13,10 @@ roslib.load_manifest ('dynamic_graph_bridge')
 #roslib.load_manifest('openhrp_bridge')
 from dynamic_graph_bridge.srv import RunCommand
 
+
+## Common
+
+
 """ convert a vector3 to a string """
 def vectorToStr(vec):
     rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
@@ -43,34 +47,15 @@ def createConstraint(proxy, command):
   runCommand(proxy, instruction)
 
 
-def convertContraintToCommands(proxy, c):
+def parameterizeContraint(proxy, c):
   rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
     "'" + c.selec + "'" + ")"
   runCommand(proxy, instruction)
-#  if c.selec != "":
-#    instruction3 = "robot.features['"+c.controller_id+"'].selec.value = '" + c.selec + "'" # Xmin, Ymin
-#    runCommand(proxy, instruction3)
 
-  # TODO: gain....
-#     if(lowerBound == upperBound):
-#      feature.reference.value = lowerBound
-#    else:
-#      feature.reference.value = 0
-#      task.referenceInf.value = lowerBound
-#      task.referenceSup.value = upperBound
-#  instruction = "robot.features['"+ command.name + "'].reference.value = 
 
-# Allows to modify the state of a constraint online
-# string identifier for the controller used
-# string controller_id
-
-### hash identifier for this motion
-##int64 movement_id
-#float64[] pos_lo	# lower bound
-#float64[] pos_hi	# upper bound
-#float64[] gain    # exponential gain (1/3 parameters)
+## End common
 
 
 
@@ -106,7 +91,7 @@ class ConstraintConfigListener:
         rospy.loginfo(rospy.get_name() + ": I heard %s" % data.controller_id)
 
         # convert the constrain and the send the corresponding command
-        convertContraintToCommands(self.run_command, data)
+        parameterizeContraint(self.run_command, data)
 
 # Start the listener
 if __name__ == '__main__':
