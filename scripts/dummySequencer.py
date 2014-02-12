@@ -4,10 +4,10 @@
 # A feature-based configuration, imitating the cylinder/orientation setup.
 
 import roslib
-roslib.load_manifest('constraint_msgs')
+roslib.load_manifest('robohow_common_msgs')
 import rospy
 
-from constraint_msgs.msg import ConstraintConfig, Constraint, Feature, ConstraintCommand
+from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature, ConstraintCommand
 from geometry_msgs.msg import Vector3
 from numpy import radians
 from starter import Starter

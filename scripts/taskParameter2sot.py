@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import roslib
-roslib.load_manifest('constraint_msgs')
+roslib.load_manifest('robohow_common_msgs')
 import rospy
 import actionlib
 
-from constraint_msgs.msg import ConstraintCommand
+from robohow_common_msgs.msg  import ConstraintCommand
 
 roslib.load_manifest('dynamic_graph_actionlib')
 from dynamic_graph_actionlib.msg import *
