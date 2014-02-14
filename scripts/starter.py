@@ -5,7 +5,7 @@ from std_msgs.msg import Int64
 class Starter:
     def __init__(self):
         print "Starter"
-        self._start = 0
+        self._start = -1
 #        rospy.init_node('listener', anonymous=True)
         rospy.Subscriber("start", Int64, self.callback)
 
@@ -17,5 +17,5 @@ class Starter:
       return self._start
 
     def reset(self):
-      self._start = 0
+      self._start = -1
 

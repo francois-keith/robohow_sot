@@ -88,17 +88,20 @@ bottle_z = Feature('bottle_z', 'bottle', Feature.VERSOR,
 constraints = {} # dictionnary of constraint
 parameters  = {}      # dictionnary of constraint parameters
 
-constraints['robot_task_com']         = Constraint('robot_task_com', 'other', None, None)
-constraints['robot_task_left-ankle']  = Constraint('robot_task_left-ankle', 'other', None, None)
-constraints['robot_task_right-ankle'] = Constraint('robot_task_right-ankle', 'other', None, None)
-constraints['robot_task_position']    = Constraint('robot_task_position', 'other', None, None)
+constraints['robot_task_com']         = Constraint('robot_task_com', 'other', None, None, None)
+constraints['robot_task_left-ankle']  = Constraint('robot_task_left-ankle', 'other', None, None, None)
+constraints['robot_task_right-ankle'] = Constraint('robot_task_right-ankle', 'other', None, None, None)
+constraints['robot_task_position']    = Constraint('robot_task_position', 'other', None, None, None)
+
+constraints['taskcontact'] = Constraint('taskcontact', 'other', None, None, None)
 
 stack = []
-stack.append(constraints['robot_task_com'])
-stack.append(constraints['robot_task_left-ankle'])
-stack.append(constraints['robot_task_right-ankle'])
+#TODO if robot.isHumanoid() == True:
+#TODO stack.append(constraints['robot_task_com'])
+#TODO stack.append(constraints['robot_task_left-ankle'])
+#TODO stack.append(constraints['robot_task_right-ankle'])
+stack.append(constraints['taskcontact'])
 stack.append(constraints['robot_task_position'])
-
 
 #stack.append(Constraint('position_bung_XY', 'position', cup, bung))
 
@@ -218,7 +221,11 @@ constraints['tips'] = Constraint('tips', 'angle', ground_x, r_gripper_y, paramet
 #c.append(Constraint('align_side',  'perpendicular', tool_side,      up))
 #c.append(Constraint('pointing_at', 'pointing_at',   tool_forward,   up))
 
+# stack.append(constraints['angle_gripperZ_bottleZ'])
 
+def safeRemove(l, key):
+ if key in l:
+  l.remove(key)
 
 class DummySequencer:
   criticalTask = None
@@ -227,22 +234,20 @@ class DummySequencer:
   pubParam = None
 
   def __init__(self, pubStack, pubParam):
-    rospy.loginfo('init')
     self.pubStack = pubStack
-    #self.pubParam = pubParam
+    self.pubParam = pubParam
 
   # graps
   def _step0(self):
-    print "going in front of the bottle"
-#    self.steps.Step(append(add=['position_gripper_bottle', 'angle_gripperZ_bottleZ'], rm=[]))
-    stack.remove(constraints['robot_task_position'])
+    rospy.loginfo ("going in front of the bottle")
+    safeRemove(stack, constraints['robot_task_position'])
     stack.append(constraints['position_gripper_bottle'])
-    stack.append(constraints['angle_gripperZ_bottleZ'])
+#    stack.append(constraints['angle_gripperZ_bottleZ'])
     self.criticalTask = 'position_gripper_bottle'
     pubStack.publish(ConstraintConfig('test', stack))
 
   def _step1(self):
-    print "task"
+    rospy.loginfo ("Step: Add gripper task")
     #fk self.solver.push(self.r_gripper_angle.task)
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
     
@@ -252,24 +257,24 @@ class DummySequencer:
 
   # close the gripper
   def _step2(self):
-    print "going to the bottle"
+    rospy.loginfo ("Step: Going to the bottle")
     # Add a task to go to the bottle
     stack.append(constraints['distance_bottle_gripper'])
     #self.solver.push(self.robot.tasks[''])
-    stack.remove(constraints['position_gripper_bottle'])
+    safeRemove(stack, constraints['position_gripper_bottle'])
     #self.solver.remove(self.robot.tasks['position_gripper_bottle'])
     self.criticalTask = 'distance_bottle_gripper'
 
   # bent the bottle a little
   def _step2a(self):
-    print "grasping"
+    rospy.loginfo ("Step: Grasping")
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0.4)
 #    self.r_gripper_angle.close()
     # update the criticalTask
     #fk self.criticalTask = self.r_gripper_angle.task
 
     # replace the task controlling the orientation of the bottle by the pouring one.
-    stack.remove(constraints['angle_gripperZ_bottleZ'])
+    safeRemove(stack, constraints['angle_gripperZ_bottleZ'])
 #    self.solver.remove(self.tasks['distance-gripperX_bottleX'])
     stack.append(constraints['angle_pouring'])
 
@@ -278,43 +283,43 @@ class DummySequencer:
  
   # go above the glass.
   def _step3(self):
-    print "Start pouring"
-    stack.remove(constraints['distance_bottle_gripper'])
+    rospy.loginfo ("Step: Start pouring")
+    safeRemove(stack, constraints['distance_bottle_gripper'])
     stack.append(constraints['position_bung_Z'])
     stack.append(constraints['position_rg_XY'])
     stack.append(constraints['position_bung_XY'])
     stack.append(constraints['angle_gripperY_in_ground_plane'])
     stack.append(constraints['tips'])
-    #TODO stack.insert(robot_task_angle_pouring)
 
     self.criticalTask = 'position_bung_Z'
 
   # pour a little
   def _step4(self):
-    print "Pouring more"
-    #TODO self.robot.features['angle_pouring'].reference.value = radians(100)
-    parameters['angle_pouring'] = ConstraintCommand(\
-      'angle_pouring', 0, [radians(100)], [radians(100)], [], '')
+    rospy.loginfo ("Step: Pouring more")
+    parameters['angle_pouring'].pos_lo = [radians(100)]
+    parameters['angle_pouring'].pos_hi = [radians(100)]
+    self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
   # pour ...
   def _step5(self):
-    print "And more"
-    #TODO self.robot.features['angle_pouring'].reference.value = radians(115)
-    parameters['angle_pouring'] = ConstraintCommand(\
-      'angle_pouring', 0, [radians(115)], [radians(115)], [], '')
+    rospy.loginfo ("Step: And more")
+    parameters['angle_pouring'].pos_lo = [radians(115)]
+    parameters['angle_pouring'].pos_hi = [radians(115)]
+    self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
   def _step6(self):
-    #TODO stack.remove(constraints['FoV'])
-    stack.remove(constraints['tips'])
-    stack.remove(constraints['position_bung_Z'])
-    stack.remove(constraints['position_bung_XY'])
+    rospy.loginfo ("Step: going to initial position")
+    
+    #TODO safeRemove(stack, constraints['FoV'])
+    safeRemove(stack, constraints['tips'])
+    safeRemove(stack, constraints['position_bung_Z'])
+    safeRemove(stack, constraints['position_bung_XY'])
     parameters['angle_pouring'].pos_lo = [radians(85)]
     parameters['angle_pouring'].pos_hi = [radians(85)]
-
-    #TODO self.robot.features['angle_pouring'].reference.value = radians(85)
-    #TODO stack.remove(constraints['taskRH'])
+    self.pubParam.publish(parameters['angle_pouring'])
+    #TODO safeRemove(stack, constraints['taskRH'])
     #TODO self.solver.sot.up(self.robot.tasks['taskRH'].name)
 
     #mhpo = MatrixHomoToPose('mhpo')
@@ -328,10 +333,10 @@ class DummySequencer:
 
 
   def _step7(self):
-    stack.remove(constraints['position_rg_XY'])
-    stack.remove(constraints['angle_gripperY_in_ground_plane'])
-    stack.remove(constraints['angle_pouring'])
-#    stack.remove(constraints['taskRH'])
+    safeRemove(stack, constraints['position_rg_XY'])
+    safeRemove(stack, constraints['angle_gripperY_in_ground_plane'])
+    safeRemove(stack, constraints['angle_pouring'])
+#    safeRemove(stack, constraints['taskRH'])
 
     stack.append(constraints['distance_bottle_gripper'])
     stack.append(constraints['angle_gripperZ_bottleZ'])
@@ -346,7 +351,6 @@ class DummySequencer:
     criticalTask = None
 
   def step(self):
-    rospy.loginfo('yatta ')
     if(self.stepIndex == -1):
       self._step0()
       self.pubStack.publish(ConstraintConfig('test', stack))
@@ -385,15 +389,6 @@ class DummySequencer:
     # increase step number
     self.stepIndex = self.stepIndex + 1
 
-    # publishes the param for each task in the SOT
-    # todo: wait for the confirmation that the pubStack has been realized.
-#    rospy.sleep(0.05)
-#    for task in stack:
-#      rospy.loginfo('in the sot: ' + task.name)
-#      if task.function != 'other':
-#        self.pubParam.publish(parameters[task.name])
-#        rospy.loginfo('param: ' + task.name)
-
 if __name__ == '__main__':
   ## OK, let's go!
   rospy.init_node('constraint_config')
@@ -402,23 +397,21 @@ if __name__ == '__main__':
 
   d=DummySequencer(pubStack, pubParam)
 
-  starter = Starter()
-  # simple try to sync with rviz...
-  #rospy.wait_for_service('/rviz/reload_shaders')
+  #one call to stepper make the robot go to the next step
+  stepper = Starter()
 
-#  rate = rospy.Rate(int(1./timeStep))
+  #one call to stepper make the robot go to the given step
+ # gotostep = Starter()
+
+  # Dummy step by step validation
   while not rospy.is_shutdown():
-    if starter.getValue() > 0:
-      print "d.step()"
+    if stepper.getValue() > 0:
       d.step()
-      starter.reset()
-
-#for i in range(0,12):
-#  rospy.loginfo(i)
-#d.step()
-
-
-#rospy.spin()
+      stepper.reset()
+#    elif gotostep.getValue() >= 0:
+#      self.stepIndex = gotostep.getValue()
+#      d.step()
+#      gotostep.reset()
 
 #requires a dummy button step.
 
