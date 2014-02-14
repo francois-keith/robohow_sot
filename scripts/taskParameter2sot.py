@@ -34,19 +34,6 @@ def runCommand(proxy, instruction):
 #    rospy.loginfo ("stdout: " + result.stdout)
     rospy.loginfo ("stderr: " + result.stderr)
 
-
-""" create the task, push it into the sot """
-def createConstraint(proxy, command):
-  instruction = "createTask(robot,'" + command.name + "', '" + command.tool_feature.name + "', " +\
-                "'" + command.world_feature.name+"', '"+command.function+"', " +\
-                "lowerBound = (0), upperBound  = (0))"
-  runCommand(proxy, instruction)
-
-  # push the task in the solver
-  instruction = "solver.push(robot.tasks['"+command.name+"'])"
-  runCommand(proxy, instruction)
-
-
 def parameterizeContraint(proxy, c):
   rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\

@@ -95,16 +95,10 @@ def createFeature(proxy, feat):
 
 
 """ create the task, push it into the sot """
-def createConstraint(proxy, command):
-  if command.function == 'transformation':
-    bounds = "lowerBound = (0, 0, 0, 0, 0, 0,), upperBound  = (0.1, 0, 0, 0, 0, 0)"
-  elif command.function == 'position':
-    bounds = "lowerBound = (0, 0, 0, 0, 0, 0,), upperBound  = (0.1, 0, 0, 0, 0, 0)"
-  else:
-    bounds = "lowerBound = (0,), upperBound  = (0.1,)"
-
-  instruction = "createTask(robot,'" + command.name + "', '" + command.tool_feature.name + "', " +\
-                "'" + command.world_feature.name+"', '"+command.function+"', " +\
+def createConstraint(proxy, constr):
+  bounds = "lowerBound = "+vectorToStr(constr.command.pos_lo)+", upperBound  = " + vectorToStr(constr.command.pos_hi)
+  instruction = "createTask(robot,'" + constr.name + "', '" + constr.tool_feature.name + "', " +\
+                "'" + constr.world_feature.name+"', '"+constr.function+"', " +\
                 bounds  +")"
   runCommand(proxy, instruction)
 
@@ -127,13 +121,13 @@ def convertContraintToCommands(proxy, constraints):
       parameterizeContraint(proxy, c.command)
 
     runCommand(proxy, "superviser.push('" + c.name +"')")
-  runCommand(proxy, "ros.rosPublish.clear()")
+#  runCommand(proxy, "ros.rosPublish.clear()")
 
   runCommand(proxy, "superviser.update()")
-  for c in constraints:
-    if c.function != 'other':    
-      instruction = "startPublishingError(ros, robot.tasks['" + c.name + "'])"
-      runCommand(proxy, instruction)
+#  for c in constraints:
+#    if c.function != 'other':    
+#      instruction = "startPublishingError(ros, robot.tasks['" + c.name + "'])"
+#      runCommand(proxy, instruction)
 
 
 #uint8 ANGLE=0			# computes the angle between the two features
