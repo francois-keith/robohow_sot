@@ -10,13 +10,10 @@ roslib.load_manifest('dynamic_graph_actionlib')
 from dynamic_graph_actionlib.msg import *
 
 roslib.load_manifest ('dynamic_graph_bridge')
-#roslib.load_manifest('openhrp_bridge')
 from dynamic_graph_bridge.srv import RunCommand
 
 
 ## Common
-
-
 """ convert a vector3 to a string """
 def vectorToStr(vec):
     rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
@@ -29,10 +26,10 @@ def vectorToStr(vec):
 
 """ run an inscruction """
 def runCommand(proxy, instruction):
-    rospy.loginfo ("run instruction: " + instruction)
+#    rospy.loginfo ("run instruction: " + instruction)
     result = proxy (instruction)
 #    rospy.loginfo ("stdout: " + result.stdout)
-    rospy.loginfo ("stderr: " + result.stderr)
+#    rospy.loginfo ("stderr: " + result.stderr)
 
 def parameterizeContraint(proxy, c):
   rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
@@ -40,8 +37,6 @@ def parameterizeContraint(proxy, c):
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
     "'" + c.selec + "'" + ")"
   runCommand(proxy, instruction)
-
-
 ## End common
 
 
@@ -64,19 +59,11 @@ class ConstraintConfigListener:
         rospy.loginfo(rospy.get_name() + "run_command obtained")
         self.run_command = rospy.ServiceProxy ('run_command', RunCommand)
 
-        # import the minimum set of python packages in the sot
-        runCommand(self.run_command, "from dynamic_graph import plug")
-        runCommand(self.run_command, "from dynamic_graph.sot.core import *")
-        runCommand(self.run_command, "from dynamic_graph.sot.expression_graph.expression_graph import *")
-        runCommand(self.run_command, "from dynamic_graph.sot.dyninv import  TaskInequality")
-
         # Subscribe to the constraint publisher
         rospy.Subscriber("/constraint_command", ConstraintCommand, self.callback)
         rospy.spin()
 
     def callback(self, data):
-        rospy.loginfo(rospy.get_name() + ": I heard %s" % data.controller_id)
-
         # convert the constrain and the send the corresponding command
         parameterizeContraint(self.run_command, data)
 

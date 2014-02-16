@@ -15,13 +15,13 @@ roslib.load_manifest ('dynamic_graph_bridge')
 from dynamic_graph_bridge.srv import RunCommand
 
 
-## Common part
-
+## Tools
 """ convert a vector3 to a string """
 def vector3ToStr(vec):
     st = "(%f, %f, %f)" % (vec.x, vec.y, vec.z)
     return st;
 
+""" Convert a vector of double into a string"""
 def vectorToStr(vec):
     rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
     st = '('
@@ -31,45 +31,19 @@ def vectorToStr(vec):
     st = st + ')'
     return st
 
-""" run an inscruction """
+""" run an instruction """
 def runCommand(proxy, instruction):
 #    rospy.logdebug ("run instruction: " + instruction)
     result = proxy (instruction)
 #    rospy.loginfo ("stdout: " + result.stdout)
 #    rospy.loginfo ("stderr: " + result.stderr)
 
-
-""" create the task, push it into the sot """
-def createConstraint(proxy, command):
-  instruction = "createTask(robot,'" + command.name + "', '" + command.tool_feature.name + "', " +\
-                "'" + command.world_feature.name+"', '"+command.function+"', " +\
-                "lowerBound = (0), upperBound  = (0))"
-  runCommand(proxy, instruction)
-
-  # push the task in the solver
-  instruction = "solver.push(robot.tasks['"+command.name+"'])"
-  runCommand(proxy, instruction)
-
-
+""" Send parameters to the constraint"""
 def parameterizeContraint(proxy, c):
-  rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
     "'" + c.selec + "'" + ")"
   runCommand(proxy, instruction)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -94,9 +68,10 @@ def createFeature(proxy, feat):
    rospy.loginfo ("not handled")
 
 
-""" create the task, push it into the sot """
+""" create the task, that will be stored in the robot database. """
 def createConstraint(proxy, constr):
-  bounds = "lowerBound = "+vectorToStr(constr.command.pos_lo)+", upperBound  = " + vectorToStr(constr.command.pos_hi)
+  bounds = "lowerBound = " + vectorToStr(constr.command.pos_lo)+", "+\
+           "upperBound = " + vectorToStr(constr.command.pos_hi)
   instruction = "createTask(robot,'" + constr.name + "', '" + constr.tool_feature.name + "', " +\
                 "'" + constr.world_feature.name+"', '"+constr.function+"', " +\
                 bounds  +")"
@@ -106,13 +81,15 @@ def createConstraint(proxy, constr):
   #instruction = "solver.push(robot.tasks['"+command.name+"'])"
   #runCommand(proxy, instruction)
 
-
+"""
+Build the set of constraints (aka stack) and the attached parameterization.
+Update the stack of tasks.
+"""
 def convertContraintToCommands(proxy, constraints):
-#  taskList = '['
   runCommand(proxy, "superviser.clear()")
   for c in constraints:
     # if the type of the task is other, we assume that the task 
-    #  has been created in the SoT / does ot depend on expression-graph system.
+    #  has been created in the SoT / does not depend on expression-graph system.
     if c.function != 'other':    
       rospy.loginfo(": Working the constraint %s, %s" % (c.name, c.function))
       createFeature(proxy, c.tool_feature)
@@ -120,15 +97,11 @@ def convertContraintToCommands(proxy, constraints):
       createConstraint(proxy, c)
       parameterizeContraint(proxy, c.command)
 
+    # Push the stack into the desired stack
     runCommand(proxy, "superviser.push('" + c.name +"')")
-#  runCommand(proxy, "ros.rosPublish.clear()")
 
+  # Actualize the current solver.
   runCommand(proxy, "superviser.update()")
-#  for c in constraints:
-#    if c.function != 'other':    
-#      instruction = "startPublishingError(ros, robot.tasks['" + c.name + "'])"
-#      runCommand(proxy, instruction)
-
 
 #uint8 ANGLE=0			# computes the angle between the two features
 #uint8 DISTANCE=1	# computes the distance between the two features
@@ -139,9 +112,9 @@ def convertContraintToCommands(proxy, constraints):
 
 """
 ConstraintListener listens to the constraints message sent, and converts
-them into commands sent to the stack of tasks run_command interface.
+them into commands sent to the stack of tasks through the run_command interface.
 """
-class Listener:
+class ConstraintListener:
 
     run_command = None
 
@@ -155,26 +128,15 @@ class Listener:
         rospy.loginfo(rospy.get_name() + "run_command obtained")
         self.run_command = rospy.ServiceProxy ('run_command', RunCommand)
 
-        # import the minimum set of python packages in the sot
-        runCommand(self.run_command, "from dynamic_graph import plug")
-        runCommand(self.run_command, "from dynamic_graph.sot.core import *")
-        runCommand(self.run_command, "from dynamic_graph.sot.expression_graph.expression_graph import *")
-        runCommand(self.run_command, "from dynamic_graph.sot.dyninv import  TaskInequality")
-        runCommand(self.run_command, "from dynamic_graph.sot.expression_graph.types import *")
-        runCommand(self.run_command, "from dynamic_graph.sot.expression_graph.functions import *")
-        runCommand(self.run_command, "robot.expressions={}")
-
         # Subscribe to the constraint publisher
         rospy.Subscriber("/constraint_config", ConstraintConfig, self.callback)
         rospy.spin()
 
     def callback(self, data):
-        rospy.loginfo(rospy.get_name() + ": I heard %s" % data.controller_id)
-
         # convert the constrain and the send the corresponding command
         convertContraintToCommands(self.run_command, data.constraints)
 
 # Start the listener
 if __name__ == '__main__':
-    talker = Listener ()
+    ConstraintListener ()
 
