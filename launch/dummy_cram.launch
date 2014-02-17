@@ -1,7 +1,7 @@
 <launch>
   <!--hard coded definition of some constraints/features -->
   <param name="humanoid" type="bool" value="False" />
-  <node name="constraints" pkg="constraint2sot" type="dummySequencer.py">
+  <node name="constraints" pkg="robohow_sot" type="dummySequencer.py">
   </node>
 
   <!--hard coded definition of some constraints parameter

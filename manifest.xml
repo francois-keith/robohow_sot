@@ -1,5 +1,5 @@
 <package>
-  <description brief="constraint2sot">
+  <description brief="robohow_sot">
     This package converts constraint_msgs into commands that are directly sent
     to the stack of tasks.
   </description>

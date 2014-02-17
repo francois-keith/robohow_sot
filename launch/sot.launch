@@ -1,7 +1,7 @@
 <launch>
   <!-- convert the tasks into sot tasks -->
-  <node name="constraintConverter" pkg="constraint2sot" type="constraintListener.py"/>
+  <node name="constraintConverter" pkg="robohow_sot" type="constraintListener.py"/>
 
   <!-- convert the parameters into sot instructions -->
-  <node name="commandConverter" pkg="constraint2sot" type="constraintCommandListener.py"/>
+  <node name="commandConverter" pkg="robohow_sot" type="constraintCommandListener.py"/>
 </launch>

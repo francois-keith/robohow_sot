@@ -6,7 +6,7 @@ import actionlib
 
 from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature
 
-roslib.load_manifest('constraint2sot')
+roslib.load_manifest('robohow_sot')
 
 roslib.load_manifest('dynamic_graph_actionlib')
 from dynamic_graph_actionlib.msg import *
