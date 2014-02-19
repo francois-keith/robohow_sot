@@ -10,7 +10,6 @@ import rospy
 from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature, ConstraintCommand
 from geometry_msgs.msg import Vector3
 from numpy import radians
-from starter import Starter
 
 from std_srvs.srv import Empty, EmptyResponse
 
