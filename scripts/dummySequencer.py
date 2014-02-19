@@ -172,6 +172,7 @@ class DummySequencer:
   def __init__(self, pubStack, pubParam):
     self.pubStack = pubStack
     self.pubParam = pubParam
+    self.reset()
 
   """ reinitialize the cram """
   def reset(self):
@@ -185,6 +186,7 @@ class DummySequencer:
       self.stack.append(constraints['robot_task_left-ankle'])
       self.stack.append(constraints['robot_task_right-ankle'])
     else:
+      self.stack = []
       self.stack.append(constraints['taskcontact'])
     #TODO #stack.append(constraints['robot_task_position'])
 
