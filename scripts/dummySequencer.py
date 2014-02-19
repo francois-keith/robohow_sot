@@ -12,6 +12,7 @@ from geometry_msgs.msg import Vector3
 from numpy import radians
 from starter import Starter
 
+from std_srvs.srv import Empty, EmptyResponse
 
 ################################# Create the tasks for the pouring task
 
@@ -68,20 +69,6 @@ constraints['robot_task_position']    = Constraint('robot_task_position', 'other
 
 constraints['taskcontact'] = Constraint('taskcontact', 'other', None, None, None)
 
-
-
-### Define the stack that will be sent to the robot.
-stack = []
-
-# Add the basic tasks for humanoid/mobile robot
-isHumanoid = rospy.get_param("humanoid")
-if isHumanoid == True:
-  stack.append(constraints['robot_task_com'])
-  stack.append(constraints['robot_task_left-ankle'])
-  stack.append(constraints['robot_task_right-ankle'])
-else:
-  stack.append(constraints['taskcontact'])
-#TODO #stack.append(constraints['robot_task_position'])
 
 
 # TODO angle_gripperZ_bottleZ =  'angle', lowerBound = radians(180), upperBound = radians(180))
@@ -179,20 +166,44 @@ class DummySequencer:
   pubStack = None      # publisher for the constraint
   pubParam = None      # publisher for the constrainCommand
 
+  ### Define the stack that will be sent to the robot.
+  stack = []
 
   """ Constructor """
   def __init__(self, pubStack, pubParam):
     self.pubStack = pubStack
     self.pubParam = pubParam
 
+  """ reinitialize the cram """
+  def reset(self):
+    rospy.loginfo ("Reset")
+
+    # Add the basic tasks for humanoid/mobile robot
+    isHumanoid = rospy.get_param("humanoid")
+    if isHumanoid == True:
+      self.stack = []
+      self.stack.append(constraints['robot_task_com'])
+      self.stack.append(constraints['robot_task_left-ankle'])
+      self.stack.append(constraints['robot_task_right-ankle'])
+    else:
+      self.stack.append(constraints['taskcontact'])
+    #TODO #stack.append(constraints['robot_task_position'])
+
+    self.stepIndex = -1
+    self.pubStack.publish(ConstraintConfig('test', self.stack))
+
+    return EmptyResponse()
+
+
+
   # graps
   def _step0(self):
     rospy.loginfo ("going in front of the bottle")
-    safeRemove(stack, constraints['robot_task_position'])
-    stack.append(constraints['position_gripper_bottle'])
+    safeRemove(self.stack, constraints['robot_task_position'])
+    self.stack.append(constraints['position_gripper_bottle'])
 #    stack.append(constraints['angle_gripperZ_bottleZ'])
     self.criticalTask = 'position_gripper_bottle'
-    pubStack.publish(ConstraintConfig('test', stack))
+    pubStack.publish(ConstraintConfig('test', self.stack))
 
   def _step1(self):
     rospy.loginfo ("Step: Add gripper task")
@@ -207,9 +218,9 @@ class DummySequencer:
   def _step2(self):
     rospy.loginfo ("Step: Going to the bottle")
     # Add a task to go to the bottle
-    stack.append(constraints['distance_bottle_gripper'])
+    self.stack.append(constraints['distance_bottle_gripper'])
     #self.solver.push(self.robot.tasks[''])
-    safeRemove(stack, constraints['position_gripper_bottle'])
+    safeRemove(self.stack, constraints['position_gripper_bottle'])
     #self.solver.remove(self.robot.tasks['position_gripper_bottle'])
     self.criticalTask = 'distance_bottle_gripper'
 
@@ -222,9 +233,9 @@ class DummySequencer:
     #fk self.criticalTask = self.r_gripper_angle.task
 
     # replace the task controlling the orientation of the bottle by the pouring one.
-    safeRemove(stack, constraints['angle_gripperZ_bottleZ'])
+    safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
 #    self.solver.remove(self.tasks['distance-gripperX_bottleX'])
-    stack.append(constraints['angle_pouring'])
+    self.stack.append(constraints['angle_pouring'])
 
 
     #todo: estimate the position of the bottle neck
@@ -232,12 +243,12 @@ class DummySequencer:
   # go above the glass.
   def _step3(self):
     rospy.loginfo ("Step: Start pouring")
-    safeRemove(stack, constraints['distance_bottle_gripper'])
-    stack.append(constraints['position_bung_Z'])
-    stack.append(constraints['position_rg_XY'])
-    stack.append(constraints['position_bung_XY'])
-    stack.append(constraints['angle_gripperY_in_ground_plane'])
-    stack.append(constraints['tips'])
+    safeRemove(self.stack, constraints['distance_bottle_gripper'])
+    self.stack.append(constraints['position_bung_Z'])
+    self.stack.append(constraints['position_rg_XY'])
+    self.stack.append(constraints['position_bung_XY'])
+    self.stack.append(constraints['angle_gripperY_in_ground_plane'])
+    self.stack.append(constraints['tips'])
 
     self.criticalTask = 'position_bung_Z'
 
@@ -261,9 +272,9 @@ class DummySequencer:
     rospy.loginfo ("Step: going to initial position")
     
     #TODO safeRemove(stack, constraints['FoV'])
-    safeRemove(stack, constraints['tips'])
-    safeRemove(stack, constraints['position_bung_Z'])
-    safeRemove(stack, constraints['position_bung_XY'])
+    safeRemove(self.stack, constraints['tips'])
+    safeRemove(self.stack, constraints['position_bung_Z'])
+    safeRemove(self.stack, constraints['position_bung_XY'])
     parameters['angle_pouring'].pos_lo = [radians(85)]
     parameters['angle_pouring'].pos_hi = [radians(85)]
     self.pubParam.publish(parameters['angle_pouring'])
@@ -281,13 +292,13 @@ class DummySequencer:
 
 
   def _step7(self):
-    safeRemove(stack, constraints['position_rg_XY'])
-    safeRemove(stack, constraints['angle_gripperY_in_ground_plane'])
-    safeRemove(stack, constraints['angle_pouring'])
+    safeRemove(self.stack, constraints['position_rg_XY'])
+    safeRemove(self.stack, constraints['angle_gripperY_in_ground_plane'])
+    safeRemove(self.stack, constraints['angle_pouring'])
 #    safeRemove(stack, constraints['taskRH'])
 
-    stack.append(constraints['distance_bottle_gripper'])
-    stack.append(constraints['angle_gripperZ_bottleZ'])
+    self.stack.append(constraints['distance_bottle_gripper'])
+    self.stack.append(constraints['angle_gripperZ_bottleZ'])
     criticalTask = 'distance_bottle_gripper'
 
   def _step8(self):
@@ -303,41 +314,42 @@ class DummySequencer:
   def step(self):
     if(self.stepIndex == -1):
       self._step0()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 0):
       self._step1()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 1):
       self._step2()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 2):
       self._step2a()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 3):
       self._step3()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 4):
       self._step4()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 5):
       self._step5()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 6):
       self._step6()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 7):
       self._step7()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 8):
       self._step8()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 9):
       self._step9()
-      self.pubStack.publish(ConstraintConfig('test', stack))
+      self.pubStack.publish(ConstraintConfig('test', self.stack))
     print "step ", self.stepIndex
 
     # increase step number
     self.stepIndex = self.stepIndex + 1
+    return EmptyResponse()
 
 
 
@@ -350,16 +362,9 @@ if __name__ == '__main__':
 
   d=DummySequencer(pubStack, pubParam)
 
-  #one call to stepper make the robot go to the next step
-  stepper = Starter()
+  stepperSrv = rospy.Service('cram_run_step', Empty, lambda req: d.step())
+  resetSrv   = rospy.Service('cram_reset', Empty, lambda req: d.reset())
 
   # Dummy step by step validation
-  while not rospy.is_shutdown():
-    if stepper.getValue() > 0:
-      d.step()
-      stepper.reset()
-
-#requires a dummy button step.
-
-
+  rospy.spin()
 
