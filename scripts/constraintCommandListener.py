@@ -35,7 +35,7 @@ def parameterizeContraint(proxy, c):
   rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
-    "'" + c.selec + "'" + ")"
+    "'" + c.selec + "'"   + ", " + vectorToStr(c.gain) + ")"
   runCommand(proxy, instruction)
 ## End common
 
@@ -69,5 +69,5 @@ class ConstraintConfigListener:
 
 # Start the listener
 if __name__ == '__main__':
-    talker = ConstraintConfigListener ()
+    configListener = ConstraintConfigListener ()
 
