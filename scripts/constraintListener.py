@@ -70,10 +70,19 @@ def createFeature(proxy, feat):
 
 """ create the task, that will be stored in the robot database. """
 def createConstraint(proxy, constr):
+  if constr.function == 0:
+    func = 'angle'
+  elif constr.function == 1:
+    func = 'distance'
+  elif constr.function == 2:
+    func = 'position'
+  else:
+    rospy.loginfo(": The constraint %s has a unknown type %s" % (c.name, c.function))
+
   bounds = "lowerBound = " + vectorToStr(constr.command.pos_lo)+", "+\
            "upperBound = " + vectorToStr(constr.command.pos_hi)
   instruction = "createTask(robot,'" + constr.name + "', '" + constr.tool_feature.name + "', " +\
-                "'" + constr.world_feature.name+"', '"+constr.function+"', " +\
+                "'" + constr.world_feature.name+"', '"+ func +"', " +\
                 bounds  +")"
   runCommand(proxy, instruction)
 
@@ -90,7 +99,7 @@ def convertContraintToCommands(proxy, constraints):
   for c in constraints:
     # if the type of the task is other, we assume that the task 
     #  has been created in the SoT / does not depend on expression-graph system.
-    if c.function != 'other':    
+    if c.function != 3:    
       rospy.loginfo(": Working the constraint %s, %s" % (c.name, c.function))
       createFeature(proxy, c.tool_feature)
       createFeature(proxy, c.world_feature)

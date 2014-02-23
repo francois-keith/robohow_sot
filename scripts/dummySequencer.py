@@ -13,6 +13,13 @@ from numpy import radians
 
 from std_srvs.srv import Empty, EmptyResponse
 
+
+# Reminder: object types.
+ANGLE=0
+DISTANCE=1
+POSITION=2
+OTHER=3
+
 ################################# Create the tasks for the pouring task
 
 # ---- Define the features corresponding the manipulation of the bottle ---
@@ -61,27 +68,27 @@ constraints = {} # dictionnary of constraint
 parameters  = {} # dictionnary of constraint parameters
 
 # Additional tasks, not defined using XPgraph- Features
-constraints['robot_task_com']         = Constraint('robot_task_com', 'other', None, None, None)
-constraints['robot_task_left-ankle']  = Constraint('robot_task_left-ankle', 'other', None, None, None)
-constraints['robot_task_right-ankle'] = Constraint('robot_task_right-ankle', 'other', None, None, None)
-constraints['robot_task_position']    = Constraint('robot_task_position', 'other', None, None, None)
+constraints['robot_task_com']         = Constraint('robot_task_com', OTHER, None, None, None)
+constraints['robot_task_left-ankle']  = Constraint('robot_task_left-ankle', OTHER, None, None, None)
+constraints['robot_task_right-ankle'] = Constraint('robot_task_right-ankle', OTHER, None, None, None)
+constraints['robot_task_position']    = Constraint('robot_task_position', OTHER, None, None, None)
 
-constraints['taskcontact'] = Constraint('taskcontact', 'other', None, None, None)
+constraints['taskcontact'] = Constraint('taskcontact', OTHER, None, None, None)
 
 
 
-# TODO angle_gripperZ_bottleZ =  'angle', lowerBound = radians(180), upperBound = radians(180))
+# TODO angle_gripperZ_bottleZ =  ANGLE, lowerBound = radians(180), upperBound = radians(180))
 
 ### Define the constraints with initial parameters.
 # angle_gripperZ_bottleZ: the gripper is oriented with the Z axis of the bottle
 parameters['angle_gripperZ_bottleZ']  = ConstraintCommand(\
   'angle_gripperZ_bottleZ', 0, [radians(180)], [radians(180)], '', [1])
-constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', 'angle', r_gripper_uz, bottle_z, parameters['angle_gripperZ_bottleZ'] )
+constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', ANGLE, r_gripper_uz, bottle_z, parameters['angle_gripperZ_bottleZ'] )
 
 # position_gripper_bottle: the gripper is at the same height as the can.
 parameters['position_gripper_bottle']  = ConstraintCommand(\
   'position_gripper_bottle', 0, [0.1, 0, 0], [0.1, 0, 0], '111', [1])
-constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', 'position', r_gripper, bottle, parameters['position_gripper_bottle'])
+constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', POSITION, r_gripper, bottle, parameters['position_gripper_bottle'])
 
 
 # Constrain the rotation of the bottle for the pouring task : 
@@ -89,18 +96,18 @@ constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', 
 #  0* => the bottle is horizontal
 parameters['angle_pouring'] = ConstraintCommand(\
   'angle_pouring', 0, [radians(90)], [radians(90)], '', [])
-constraints['angle_pouring'] = Constraint('angle_pouring', 'angle', bung_x, ground_z, parameters['angle_pouring'])
+constraints['angle_pouring'] = Constraint('angle_pouring', ANGLE, bung_x, ground_z, parameters['angle_pouring'])
 
 
 # Constrain the rotation of the gripper to keep the hand horizontal 
 parameters['angle_gripperY_in_ground_plane'] = angle_gripperY_in_ground_plane_Param = ConstraintCommand(\
   'angle_gripperY_in_ground_plane', 0, [radians(0)], [radians(0)], '', [])
-constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  'angle',  ground_plane, r_gripper_y, parameters['angle_gripperY_in_ground_plane'])
+constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  ANGLE,  ground_plane, r_gripper_y, parameters['angle_gripperY_in_ground_plane'])
 
 # Distance bottle / r_hand
 parameters['distance_bottle_gripper'] = ConstraintCommand(\
   'distance_bottle_gripper', 0, [radians(0)], [radians(0)], '', [])
-constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', 'distance', r_gripper, bottle, parameters['distance_bottle_gripper'])
+constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', DISTANCE, r_gripper, bottle, parameters['distance_bottle_gripper'])
 
 
 # ---- TASKS corresponding the manipulation of the bottle ---
@@ -108,12 +115,12 @@ constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', '
 ## height of the bottle above the target
 parameters['position_bung_Z'] = ConstraintCommand(\
   'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
-constraints['position_Z_bung'] = Constraint('position_bung_Z', 'position', bung, cup, parameters['position_bung_Z'])
+constraints['position_Z_bung'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
 #######################################################
 parameters['position_rg_XY'] = ConstraintCommand(\
   'position_rg_XY', 0, [0.02], [100], '', [])
-constraints['position_rg_XY'] = Constraint('position_rg_XY', 'distance', cup, r_gripper, parameters['position_rg_XY'])
+constraints['position_rg_XY'] = Constraint('position_rg_XY', DISTANCE, cup, r_gripper, parameters['position_rg_XY'])
 
 
 #######################################################
@@ -121,18 +128,18 @@ constraints['position_rg_XY'] = Constraint('position_rg_XY', 'distance', cup, r_
 ## inequality task: we want the bottle to be above the recipient
 parameters['position_bung_XY'] = ConstraintCommand(\
   'position_bung_XY', 0, [-0.025,-0.025], [ 0.025, 0.025], '011', [])
-constraints['position_bung_XY'] = Constraint('position_bung_XY', 'position', cup, bung, parameters['position_bung_XY'])
+constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
 
 # ---- TASKS corresponding the manipulation of the bottle ---
 ################################ #######################
 ## height of the bottle above the target
 parameters['position_bung_Z'] = ConstraintCommand(\
   'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
-constraints['position_bung_Z'] = Constraint('position_bung_Z', 'position', bung, cup, parameters['position_bung_Z'])
+constraints['position_bung_Z'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
 #
 parameters['tips']  = ConstraintCommand('tips', 0, [2.5], [2.5], '', [])
-constraints['tips'] = Constraint('tips', 'angle', ground_x, r_gripper_y, parameters['tips'] )
+constraints['tips'] = Constraint('tips', ANGLE, ground_x, r_gripper_y, parameters['tips'] )
 
 
 ##     ################################ #######################
@@ -179,7 +186,11 @@ class DummySequencer:
     rospy.loginfo ("Reset")
 
     # Add the basic tasks for humanoid/mobile robot
+    robot = rospy.get_param("robot")
     isHumanoid = rospy.get_param("humanoid")
+    if robot.lower() == "hrp4" or robot.lower() == "romeo":
+      isHumanoid = True
+
     if isHumanoid == True:
       self.stack = []
       self.stack.append(constraints['robot_task_com'])
