@@ -74,6 +74,12 @@ constraints['robot_task_right-ankle'] = Constraint('robot_task_right-ankle', OTH
 constraints['robot_task_position']    = Constraint('robot_task_position', OTHER, None, None, None)
 
 constraints['taskcontact'] = Constraint('taskcontact', OTHER, None, None, None)
+constraints['taskbase'] = Constraint('taskbase', OTHER, None, None, None)
+constraints['taskJL'] = Constraint('taskJL', OTHER, None, None, None)
+
+
+constraints['taskright-wrist'] = Constraint('taskright-wrist', OTHER, None, None, None)
+constraints['taskright-gripper'] = Constraint('taskright-gripper', OTHER, None, None, None)
 
 
 
@@ -164,6 +170,13 @@ def safeRemove(l, key):
  if key in l:
   l.remove(key)
 
+def up (list, x):
+  if x in list:
+    val = list.index(x)
+    if val > 0:
+      list.remove(x)
+      list.insert(val-1,x)
+
 
 """ A simple sequencer. """
 class DummySequencer:
@@ -199,9 +212,11 @@ class DummySequencer:
     else:
       self.stack = []
       self.stack.append(constraints['taskcontact'])
+      self.stack.append(constraints['taskbase'])
+      self.stack.append(constraints['taskJL'])
     #TODO #stack.append(constraints['robot_task_position'])
 
-    self.stepIndex = -1
+    self.stepIndex = 1
     self.pubStack.publish(ConstraintConfig('test', self.stack))
 
     return EmptyResponse()
@@ -230,7 +245,8 @@ class DummySequencer:
   def _step2(self):
     rospy.loginfo ("Step: Going to the bottle")
     # Add a task to go to the bottle
-    self.stack.append(constraints['distance_bottle_gripper'])
+    self.stack.append(constraints['taskright-wrist'])
+#    self.stack.append(constraints['distance_bottle_gripper'])
     #self.solver.push(self.robot.tasks[''])
     safeRemove(self.stack, constraints['position_gripper_bottle'])
     #self.solver.remove(self.robot.tasks['position_gripper_bottle'])
@@ -255,10 +271,15 @@ class DummySequencer:
   # go above the glass.
   def _step3(self):
     rospy.loginfo ("Step: Start pouring")
-    safeRemove(self.stack, constraints['distance_bottle_gripper'])
+    safeRemove(self.stack, constraints['taskright-wrist'])
     self.stack.append(constraints['position_bung_Z'])
     self.stack.append(constraints['position_rg_XY'])
     self.stack.append(constraints['position_bung_XY'])
+
+    up(self.stack, constraints['position_bung_Z'])
+    up(self.stack, constraints['position_rg_XY'])
+    up(self.stack, constraints['position_bung_XY'])
+
     self.stack.append(constraints['angle_gripperY_in_ground_plane'])
     self.stack.append(constraints['tips'])
 

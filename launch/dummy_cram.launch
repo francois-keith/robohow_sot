@@ -29,7 +29,7 @@
 
   <node name="bottle" pkg="tf"
         type="static_transform_publisher"
-        args="0.3  -0.27  1  0 0 0 /odom /bottle 100"/>
+        args="0.6800192729933892 -0.15177032312402075 0.8319792130097555  0 0 0 /odom /bottle 100"/>
 
   <node name="cup" pkg="tf"
         type="static_transform_publisher"
