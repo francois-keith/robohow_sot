@@ -120,7 +120,8 @@ constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', D
 ################################ #######################
 ## height of the bottle above the target
 parameters['position_bung_Z'] = ConstraintCommand(\
-  'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
+   'position_bung_Z', 0, [0.0], [0.0], '100', [])
+  #'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
 constraints['position_Z_bung'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
 #######################################################
@@ -140,7 +141,8 @@ constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, 
 ################################ #######################
 ## height of the bottle above the target
 parameters['position_bung_Z'] = ConstraintCommand(\
-  'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
+   'position_bung_Z', 0, [0.0], [0.0], '100', [])
+  #'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
 constraints['position_bung_Z'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
 #
