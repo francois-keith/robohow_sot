@@ -140,6 +140,12 @@ class ExamplePouringSOT:
     parameters['angle_pouring'].pos_hi = [radians(115)] # NOTE: these values are the one IMPOSED for the pouring
     self.pubParam.publish(parameters['angle_pouring'])
 
+  # bringingObjBack
+  def _bringingObjBack(self):
+    rospy.loginfo ("Bringing object back")
+    parameters['angle_pouring'].pos_lo = [radians(90)] # NOTE: these values are the one IMPOSED for the pouring
+    parameters['angle_pouring'].pos_hi = [radians(90)] # NOTE: these values are the one IMPOSED for the pouring
+    self.pubParam.publish(parameters['angle_pouring'])
   """ run a step """
   def step(self):
     if(self.stepIndex == 0):
@@ -149,6 +155,10 @@ class ExamplePouringSOT:
     elif(self.stepIndex == 1):
       print "... Executing Pouring Task to SoT ..."
       self._executePouringTask()
+      self.pubStack.publish(ConstraintConfig('pouring', self.stack))
+    elif(self.stepIndex == 2):
+      print "... Object Back after Pouring to SoT ..."
+      self._bringingObjBack()
       self.pubStack.publish(ConstraintConfig('pouring', self.stack))
     print "step ", self.stepIndex
 
