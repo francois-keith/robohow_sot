@@ -7,46 +7,13 @@ import actionlib
 from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature
 
 roslib.load_manifest('robohow_sot')
+from robohow_sot.utils import *
 
 roslib.load_manifest('dynamic_graph_actionlib')
 from dynamic_graph_actionlib.msg import *
 
 roslib.load_manifest ('dynamic_graph_bridge')
 from dynamic_graph_bridge.srv import RunCommand
-
-
-## Tools
-""" convert a vector3 to a string """
-def vector3ToStr(vec):
-    st = "(%f, %f, %f)" % (vec.x, vec.y, vec.z)
-    return st;
-
-""" Convert a vector of double into a string"""
-def vectorToStr(vec):
-    rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
-    st = '('
-    for i in range(0, len(vec)):
-      s = "%f, " % vec[i]
-      st = st + s
-    st = st + ')'
-    return st
-
-""" run an instruction """
-def runCommand(proxy, instruction):
-#    rospy.logdebug ("run instruction: " + instruction)
-    result = proxy (instruction)
-#    rospy.loginfo ("stdout: " + result.stdout)
-#    rospy.loginfo ("stderr: " + result.stderr)
-
-""" Send parameters to the constraint"""
-def parameterizeContraint(proxy, c):
-  if c.controller_id == '':
-    return
-
-  instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
-    vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
-    "'" + c.selec + "'" + ", " + vectorToStr(c.gain)+ ")"
-  runCommand(proxy, instruction)
 
 
 
@@ -58,20 +25,23 @@ def createFeature(proxy, feat):
     instruction = "createExpression(robot, PlaneElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "normal = "   + vector3ToStr(feat.direction) +","\
       "position = " + vector3ToStr(feat.position ) +"))"
-    runCommand(proxy, instruction)
+    runCommandProxy(proxy, instruction)
   elif feat.type == 2: # POINT
     instruction = "createExpression(robot, PointElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "position = " + vector3ToStr(feat.position)  +"))"
-    runCommand(proxy, instruction)
+    runCommandProxy(proxy, instruction)
   elif feat.type == 3: # VERSOR
     instruction = "createExpression(robot, VersorElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "versor = "   + vector3ToStr(feat.direction) +"))"
-    runCommand(proxy, instruction)
+    runCommandProxy(proxy, instruction)
   else:
    rospy.loginfo ("not handled")
 
 
-""" create the task, that will be stored in the robot database. """
+
+""" 
+Create the task, that will be stored in the robot database. 
+"""
 def createConstraint(proxy, constr):
   if constr.function == 0:
     func = 'angle'
@@ -87,18 +57,16 @@ def createConstraint(proxy, constr):
   instruction = "createTask(robot,'" + constr.name + "', '" + constr.tool_feature.name + "', " +\
                 "'" + constr.world_feature.name+"', '"+ func +"', " +\
                 bounds  +")"
-  runCommand(proxy, instruction)
+  runCommandProxy(proxy, instruction)
 
-  # push the task in the solver
-  #instruction = "solver.push(robot.tasks['"+command.name+"'])"
-  #runCommand(proxy, instruction)
+
 
 """
 Build the set of constraints (aka stack) and the attached parameterization.
 Update the stack of tasks.
 """
 def convertContraintToCommands(proxy, constraints):
-  runCommand(proxy, "superviser.clear()")
+  runCommandProxy(proxy, "superviser.clear()")
   for c in constraints:
     # if the type of the task is other, we assume that the task 
     #  has been created in the SoT / does not depend on expression-graph system.
@@ -107,14 +75,16 @@ def convertContraintToCommands(proxy, constraints):
       createFeature(proxy, c.tool_feature)
       createFeature(proxy, c.world_feature)
       createConstraint(proxy, c)
+
+    # Parameterize the constraint
     rospy.loginfo(": Parameterizing the constraint %s, %s" % (c.name, c.function))
     parameterizeContraint(proxy, c.command)
 
     # Push the stack into the desired stack
-    runCommand(proxy, "superviser.push('" + c.name +"')")
+    runCommandProxy(proxy, "superviser.push('" + c.name +"')")
 
   # Actualize the current solver.
-  runCommand(proxy, "superviser.update()")
+  runCommandProxy(proxy, "superviser.update()")
 
 #uint8 ANGLE=0			# computes the angle between the two features
 #uint8 DISTANCE=1	# computes the distance between the two features
@@ -149,6 +119,8 @@ class ConstraintListener:
     def callback(self, data):
         # convert the constrain and the send the corresponding command
         convertContraintToCommands(self.run_command, data.constraints)
+
+
 
 # Start the listener
 if __name__ == '__main__':

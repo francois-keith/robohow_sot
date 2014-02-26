@@ -4,6 +4,9 @@ roslib.load_manifest('robohow_common_msgs')
 import rospy
 import actionlib
 
+roslib.load_manifest('robohow_sot')
+from robohow_sot.utils import *
+
 from robohow_common_msgs.msg  import ConstraintCommand
 
 roslib.load_manifest('dynamic_graph_actionlib')
@@ -11,38 +14,6 @@ from dynamic_graph_actionlib.msg import *
 
 roslib.load_manifest ('dynamic_graph_bridge')
 from dynamic_graph_bridge.srv import RunCommand
-
-
-## Common
-""" convert a vector3 to a string """
-def vectorToStr(vec):
-    rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
-    st = '('
-    for i in range(0, len(vec)):
-      s = "%f, " % vec[i]
-      st = st + s
-    st = st + ')'
-    return st
-
-""" run an inscruction """
-def runCommand(proxy, instruction):
-#    rospy.loginfo ("run instruction: " + instruction)
-    result = proxy (instruction)
-#    rospy.loginfo ("stdout: " + result.stdout)
-#    rospy.loginfo ("stderr: " + result.stderr)
-
-def parameterizeContraint(proxy, c):
-  if c.controller_id == '':
-    return
-
-  rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
-  instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
-    vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
-    "'" + c.selec + "'"   + ", " + vectorToStr(c.gain) + ")"
-  runCommand(proxy, instruction)
-## End common
-
-
 
 """
 ConstraintListener listens to the constraints message sent, and converts
