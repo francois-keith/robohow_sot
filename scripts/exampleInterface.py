@@ -52,6 +52,7 @@ parameters  = {} # dictionnary of constraint parameters
 constraints['taskcontact'] = Constraint('taskcontact', OTHER, None, None, None)
 constraints['taskbase'] = Constraint('taskbase', OTHER, None, None, None)
 constraints['taskJL'] = Constraint('taskJL', OTHER, None, None, None)
+constraints['weight'] = Constraint('weight', OTHER, None, None, None)
 
 ### Define the constraints with initial parameters.
 
@@ -90,6 +91,13 @@ parameters['position_bung_XY'] = ConstraintCommand(\
   'position_bung_XY', 0, [-0.025,-0.025], [ 0.025, 0.025], '011', [])
 constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
 
+
+""" Move the element at the end of the list. """
+def moveLast(list, x):
+  if x in list:
+    list.remove(x)
+    list.append(x)
+
 """ NOTE: A LIST OF TASK IS SENT EVERYTIME, with ONLY the TASK constraints to be solved!!
 Internally, the SoT bridge takes care of actually remove all the task previously inserted and not
 needed anymore (hence, not in the list """
@@ -119,6 +127,7 @@ class ExamplePouringSOT:
     self.stack.append(constraints['taskcontact'])
     self.stack.append(constraints['taskbase'])
     self.stack.append(constraints['taskJL'])
+    self.stack.append(constraints['weight'])
 
     self.stepIndex = 0
     self.pubStack.publish(ConstraintConfig('pouring', self.stack))
@@ -132,6 +141,7 @@ class ExamplePouringSOT:
     self.stack.append(constraints['position_bung_XY'])
     self.stack.append(constraints['angle_pouring'])
     self.stack.append(constraints['angle_gripperY_in_ground_plane'])
+    moveLast(self.stack, constraints['weight'])
 
   # Executing this function will make the pouring motion
   def _executePouringTask(self):
@@ -146,6 +156,8 @@ class ExamplePouringSOT:
     parameters['angle_pouring'].pos_lo = [radians(90)] # NOTE: these values are the one IMPOSED for the pouring
     parameters['angle_pouring'].pos_hi = [radians(90)] # NOTE: these values are the one IMPOSED for the pouring
     self.pubParam.publish(parameters['angle_pouring'])
+
+
   """ run a step """
   def step(self):
     if(self.stepIndex == 0):
