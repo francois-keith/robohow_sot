@@ -40,9 +40,12 @@ def runCommand(proxy, instruction):
 
 """ Send parameters to the constraint"""
 def parameterizeContraint(proxy, c):
+  if c.controller_id == '':
+    return
+
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
-    "'" + c.selec + "'" + ")"
+    "'" + c.selec + "'" + ", " + vectorToStr(c.gain)+ ")"
   runCommand(proxy, instruction)
 
 
@@ -100,11 +103,12 @@ def convertContraintToCommands(proxy, constraints):
     # if the type of the task is other, we assume that the task 
     #  has been created in the SoT / does not depend on expression-graph system.
     if c.function != 3:    
-      rospy.loginfo(": Working the constraint %s, %s" % (c.name, c.function))
+      rospy.loginfo(": Creating the constraint %s, %s" % (c.name, c.function))
       createFeature(proxy, c.tool_feature)
       createFeature(proxy, c.world_feature)
       createConstraint(proxy, c)
-      parameterizeContraint(proxy, c.command)
+    rospy.loginfo(": Parameterizing the constraint %s, %s" % (c.name, c.function))
+    parameterizeContraint(proxy, c.command)
 
     # Push the stack into the desired stack
     runCommand(proxy, "superviser.push('" + c.name +"')")
@@ -134,6 +138,7 @@ class ConstraintListener:
         # Wait for the run_command service to be started
         rospy.loginfo("\n " + rospy.get_name() + " waiting for run_command")
         rospy.wait_for_service ('run_command')
+        rospy.sleep(1)
         rospy.loginfo(rospy.get_name() + "run_command obtained")
         self.run_command = rospy.ServiceProxy ('run_command', RunCommand)
 

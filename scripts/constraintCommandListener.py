@@ -32,6 +32,9 @@ def runCommand(proxy, instruction):
 #    rospy.loginfo ("stderr: " + result.stderr)
 
 def parameterizeContraint(proxy, c):
+  if c.controller_id == '':
+    return
+
   rospy.loginfo(": Working Beta the constraint %s" % (c.controller_id))
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
