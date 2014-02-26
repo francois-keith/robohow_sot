@@ -136,8 +136,8 @@ class ExamplePouringSOT:
   # Executing this function will make the pouring motion
   def _executePouringTask(self):
     rospy.loginfo ("Step: And more")
-    parameters['angle_pouring'].pos_lo = [radians(115)]
-    parameters['angle_pouring'].pos_hi = [radians(115)]
+    parameters['angle_pouring'].pos_lo = [radians(115)] # NOTE: these values are the one IMPOSED for the pouring
+    parameters['angle_pouring'].pos_hi = [radians(115)] # NOTE: these values are the one IMPOSED for the pouring
     self.pubParam.publish(parameters['angle_pouring'])
 
   """ run a step """

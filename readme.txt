@@ -33,6 +33,8 @@ CRAM sofware should streams the tasks needed to be executed, through the topics 
 
 Please, check the messages in robohow_common_msgs package
 
+Option III: rosbag record + rosbag play of the streamed data
+
 For the Pouring DEMO, some comments from the messages analysis on the data filled in
 controller_id: pouring -> REFERENCE NAME. For the demo, only this exists
 constraints: -> List of constraints. All the following are anyway filled in internally by SoT
