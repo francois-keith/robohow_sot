@@ -76,14 +76,10 @@ constraints['robot_task_position']    = Constraint('robot_task_position', OTHER,
 constraints['taskcontact'] = Constraint('taskcontact', OTHER, None, None, None)
 constraints['taskbase'] = Constraint('taskbase', OTHER, None, None, None)
 constraints['taskJL'] = Constraint('taskJL', OTHER, None, None, None)
+constraints['weight'] = Constraint('weight', OTHER, None, None, None)
 
-
-constraints['taskright-wrist'] = Constraint('taskright-wrist', OTHER, None, None, None)
-constraints['taskright-gripper'] = Constraint('taskright-gripper', OTHER, None, None, None)
-
-
-
-# TODO angle_gripperZ_bottleZ =  ANGLE, lowerBound = radians(180), upperBound = radians(180))
+parameters['taskright-wrist']  = ConstraintCommand('taskright-wrist', 0, [], [], '', [2])
+constraints['taskright-wrist'] = Constraint('taskright-wrist', OTHER, None, None, parameters['taskright-wrist'])
 
 ### Define the constraints with initial parameters.
 # angle_gripperZ_bottleZ: the gripper is oriented with the Z axis of the bottle
@@ -172,12 +168,20 @@ def safeRemove(l, key):
  if key in l:
   l.remove(key)
 
+""" Reduce the index of the element x by 1 in the list. """
 def up (list, x):
   if x in list:
     val = list.index(x)
     if val > 0:
       list.remove(x)
       list.insert(val-1,x)
+
+""" Move the element at the end of the list. """
+def moveLast(list, x):
+  if x in list:
+    list.remove(x)
+    list.append(x)
+
 
 
 """ A simple sequencer. """
@@ -216,6 +220,7 @@ class DummySequencer:
       self.stack.append(constraints['taskcontact'])
       self.stack.append(constraints['taskbase'])
       self.stack.append(constraints['taskJL'])
+      self.stack.append(constraints['weight'])
     #TODO #stack.append(constraints['robot_task_position'])
 
     self.stepIndex = 1
@@ -231,6 +236,8 @@ class DummySequencer:
     safeRemove(self.stack, constraints['robot_task_position'])
     self.stack.append(constraints['position_gripper_bottle'])
 #    stack.append(constraints['angle_gripperZ_bottleZ'])
+
+
     self.criticalTask = 'position_gripper_bottle'
     pubStack.publish(ConstraintConfig('test', self.stack))
 
@@ -313,15 +320,6 @@ class DummySequencer:
     parameters['angle_pouring'].pos_lo = [radians(85)]
     parameters['angle_pouring'].pos_hi = [radians(85)]
     self.pubParam.publish(parameters['angle_pouring'])
-    #TODO safeRemove(stack, constraints['taskRH'])
-    #TODO self.solver.sot.up(self.robot.tasks['taskRH'].name)
-
-    #mhpo = MatrixHomoToPose('mhpo')
-    #plug(self.robot.rightWrist.position, mhpo.sin)
-    #mhpo.sout.recompute(self.robot.rightWrist.position.time)
-    #target=mhpo.sout.value
-    #gotoNd(self.taskRH,target,'111',(4.9,0.9,0.01,0.9))
-
     #self.criticalTask = 'taskRH'
     
 
@@ -330,7 +328,6 @@ class DummySequencer:
     safeRemove(self.stack, constraints['position_rg_XY'])
     safeRemove(self.stack, constraints['angle_gripperY_in_ground_plane'])
     safeRemove(self.stack, constraints['angle_pouring'])
-#    safeRemove(stack, constraints['taskRH'])
 
     self.stack.append(constraints['distance_bottle_gripper'])
     self.stack.append(constraints['angle_gripperZ_bottleZ'])
@@ -349,43 +346,36 @@ class DummySequencer:
   def step(self):
     if(self.stepIndex == -1):
       self._step0()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 0):
       self._step1()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 1):
       self._step2()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 2):
       self._step2a()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 3):
       self._step3()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 4):
       self._step4()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 5):
       self._step5()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 6):
       self._step6()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 7):
       self._step7()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 8):
       self._step8()
-      self.pubStack.publish(ConstraintConfig('test', self.stack))
     elif(self.stepIndex == 9):
       self._step9()
+
+    if(self.stepIndex <= 9):
+      moveLast(self.stack, constraints['weight'])
       self.pubStack.publish(ConstraintConfig('test', self.stack))
-    print "step ", self.stepIndex
+      print "step ", self.stepIndex
+
 
     # increase step number
     self.stepIndex = self.stepIndex + 1
     return EmptyResponse()
-
 
 
 
