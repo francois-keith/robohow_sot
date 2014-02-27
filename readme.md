@@ -93,6 +93,11 @@ __NOTE: Inverse polish notation: the  '011' is z off, y on, and x on.__
     constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
     
 ###To be added:
-- specify topics where the current error is written;
-- 
+
+###Error feedback
+For each task scheduled in SoT, a relative feedback ROS topic is published.
+As convention, the name of the topic is the same name of the relative task, while the datatype exchanged is of type dynamic_graph/Vector (formally, float64[])
+The vector contains the error relatives to the constrained variables, plus a normalized value.
+That means, if the constraint is a Scalar, then the vector contains two element; if it a position, it contains 4 elements (3 variable errors, plus their norm value)
+It is up to the SoT client keep track of the names and the expected dimension of the return vector.
 
