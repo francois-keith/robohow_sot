@@ -1,0 +1,108 @@
+### list of Feature considered
+- # world's Z axis
+  name:'ground_z'
+  frame_id: 'ground'
+  type: Feature.VERSOR
+  position:  (0,0,0)
+  direction: (0,0,1)
+
+- # Position of the cup
+  name:'cup'
+  frame_id: 'cup'
+  type: Feature.POINT
+  position:  (0,0,0)
+  direction: (0,0,0)
+
+- # Position of the spout (expressed in the frame of the spout)
+  name:'bung'
+  frame_id: 'bung'
+  type: Feature.POINT
+  position:  (0,0,0)
+  direction: (0,0,0)
+
+- # Spout axis.
+  name:'bung_x'
+  frame_id: 'bung'
+  type: Feature.VERSOR
+  position:  (0,0,0)
+  direction: (1,0,0)
+
+- # 
+  name:'ground_plane'
+  frame_id: 'ground'
+  type: Feature.PLANE
+  position:  (0,0,0)
+  direction: (0,0,1)
+
+
+- # Rotation axis for the gripper considered (here, the right one)
+  name:'r_gripper_y'
+  frame_id: 'r_gripper'
+  type: Feature.VERSOR
+  position:  (0,0,0)
+  direction: (0,1,0)
+
+
+
+
+
+
+
+
+## Stack corresponding to a pouring task of a container with a spout.
+# specialized for the right hand.
+controller_id: pouring
+constraints: 
+  - ## height of the bottle above the target
+    name: 'position_bung_Z'
+    function: 3
+    tool_feature: bund
+    world_feature: cup
+    command:
+      name: 'position_bung_Z'
+      movement_id: 0
+      pos_lo: [-0.05]
+      pos_hi:[-0.05]
+      selec: '100'
+      gain: []
+
+  - ## position of the bottle above the target. (inequality task: we want the bottle to be above the recipient)
+    name: 'position_bung_XY'
+    function: 3
+    tool_feature: cup
+    world_feature: bung
+    command:
+      name: 'position_bung_XY'
+      movement_id: 0
+      pos_lo: [-0.025,-0.025]
+      pos_hi: [ 0.025, 0.025]
+      selec: '011'
+      gain: []
+
+  - ## Rotation angle
+    name: 'angle_pouring'
+    function: 0
+    tool_feature: bung_x
+    world_feature: ground_z
+    command:
+      name: 'angle_pouring'
+      movement_id: 0
+      pos_lo: [radians(90)]
+      pos_hi: [radians(90)]
+      selec: ''
+      gain: []
+
+  - ## constrain of the gripper rotation around the spout.
+    name: 'angle_gripperY_in_ground_plane'
+    function: 0
+    tool_feature:  ground_plane
+    world_feature: r_gripper_y
+    command:
+      name: 'angle_gripperY_in_ground_plane'
+      movement_id: 0 #To be removed
+      pos_lo: [0]
+      pos_hi: [0]
+      selec: ''
+      gain: []
+
+
