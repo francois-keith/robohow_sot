@@ -5,11 +5,16 @@
 
 import roslib
 roslib.load_manifest('robohow_common_msgs')
+roslib.load_manifest('pr2_controllers_msgs') # gripper msgs
 import rospy
+import actionlib #for the gripper
 
 from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature, ConstraintCommand
 from geometry_msgs.msg import Vector3
 from numpy import radians
+from actionlib_msgs.msg import *
+from pr2_controllers_msgs.msg import *
+
 
 from std_srvs.srv import Empty, EmptyResponse
 
@@ -190,6 +195,7 @@ class DummySequencer:
   stepIndex = -1       # current step
   pubStack = None      # publisher for the constraint
   pubParam = None      # publisher for the constrainCommand
+  gripperCall = None   # Gripper actionlib calls
 
   ### Define the stack that will be sent to the robot.
   stack = []
@@ -198,6 +204,9 @@ class DummySequencer:
   def __init__(self, pubStack, pubParam):
     self.pubStack = pubStack
     self.pubParam = pubParam
+    self.gripperCall = actionlib.SimpleActionClient('r_gripper_controller/gripper_action',Pr2GripperCommandAction)
+    print "Waiting for the gripper server"
+    self.gripperCall.wait_for_server()
     self.reset()
 
   """ reinitialize the cram """
@@ -226,6 +235,10 @@ class DummySequencer:
     self.stepIndex = 1
     self.pubStack.publish(ConstraintConfig('test', self.stack))
 
+    self.gripperCall.send_goal(Pr2GripperCommandGoal(\
+      Pr2GripperCommand(position = 0.3, max_effort = 50)))
+    self.gripperCall.wait_for_result()
+    
     return EmptyResponse()
 
 
@@ -242,7 +255,10 @@ class DummySequencer:
     pubStack.publish(ConstraintConfig('test', self.stack))
 
   def _step1(self):
-    rospy.loginfo ("Step: Add gripper task")
+    rospy.loginfo ("Step: Add gripper task")   
+    self.gripperCall.send_goal(Pr2GripperCommandGoal(\
+        Pr2GripperCommand(position = 0.3, max_effort = 50)))
+    self.gripperCall.wait_for_result()
     #fk self.solver.push(self.r_gripper_angle.task)
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
     
@@ -384,7 +400,7 @@ if __name__ == '__main__':
   rospy.init_node('constraint_config')
   pubStack = rospy.Publisher('/constraint_config', ConstraintConfig, latch=True)
   pubParam = rospy.Publisher('/constraint_command', ConstraintCommand, latch=True)
-
+  rospy.sleep(3)
   d=DummySequencer(pubStack, pubParam)
 
   stepperSrv = rospy.Service('cram_run_step', Empty, lambda req: d.step())

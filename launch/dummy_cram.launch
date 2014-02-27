@@ -1,7 +1,7 @@
 <launch>
   <!--hard coded definition of some constraints/features -->
   <param name="humanoid" type="bool" value="False" />
-  <node name="constraints" pkg="robohow_sot" type="exampleInterface.py" output="screen">
+  <node name="constraints" pkg="robohow_sot" type="dummySequencer.py" output="screen">
   </node>
 
   <!--start the feature visualization node -->
