@@ -18,6 +18,15 @@
         args="0.4 0 0.8  0 0 0 1 /odom /cup 100"/>
 
   <!-- define environment key elements -->
-  <node name="bottle" pkg="robohow_sot" type="tf_to_MatrixHomo.py" args="bottle"/>
-  <node name="cup"    pkg="robohow_sot" type="tf_to_MatrixHomo.py" args="cup"/>
+  <node name="bottle"    pkg="dynamic_graph_bridge" type="tf_publisher">
+    <param name="frame"       type="string" value="bottle" />
+    <param name="child_frame" type="string" value="odom" />
+    <param name="topic"       type="string" value="bottle" />
+  </node>
+
+  <node name="cup"    pkg="dynamic_graph_bridge" type="tf_publisher">
+    <param name="frame"       type="string" value="cup" />
+    <param name="child_frame" type="string" value="odom" />
+    <param name="topic"       type="string" value="cup" />
+  </node>
 </launch>
