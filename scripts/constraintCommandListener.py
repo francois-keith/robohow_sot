@@ -17,7 +17,7 @@ from dynamic_graph_bridge_msgs.srv import RunCommand
 
 """
 ConstraintListener listens to the constraints message sent, and converts
-them into commands sent to the stack of tasks run_command interface.
+them into python commands sent to the stack of tasks through run_command interface.
 """
 class ConstraintConfigListener:
 
@@ -39,7 +39,10 @@ class ConstraintConfigListener:
 
     def callback(self, data):
         # convert the constrain and the send the corresponding command
-        parameterizeContraint(self.run_command, data)
+        instructionList = [parameterizeContraint(data)]
+        if instructionList != []:
+          instruction = regroupCommands(instructionList)
+          runCommandProxy(self.run_command, instruction)
 
 # Start the listener
 if __name__ == '__main__':

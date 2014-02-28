@@ -33,25 +33,33 @@ def vectorToStr(vec):
     st = st + ')'
     return st
 
+""" Regroup a list of python instructions as a single one """ 
+def regroupCommands(instructionList):
+    rospy.loginfo(rospy.get_name() + ": instructionList")
+    instruction = instructionList[0]
+    for elmt in instructionList[1:]:
+      if elmt != "":
+        instruction = instruction + "  ;  " + elmt
+    return instruction
+
 """ run an instruction """
 def runCommandProxy(proxy, instruction):
-#    rospy.loginfo ("run instruction: " + instruction)
+    #rospy.loginfo ("run instruction: \"%s\"", instruction)
     result = proxy (instruction)
-#    rospy.loginfo ("stdout: " + result.stdout)
-#    rospy.loginfo ("stderr: " + result.stderr)
+    #rospy.loginfo ("stdout: \"%s\"", result.stdout)
+    rospy.loginfo ("stderr: \"%s\"", result.stderr)
 
 
 """
 Send parameters to the constraint
 Takes a ConstraintCommand as an input.
 """
-def parameterizeContraint(proxy, c):
+def parameterizeContraint(c):
   if c.controller_id == '':
-    return
+    return ""
 
   instruction = "setTaskGoal(robot, '"+c.controller_id+"', " +\
     vectorToStr(c.pos_lo) + ", " + vectorToStr(c.pos_hi) + ", " +\
     "'" + c.selec + "'"   + ", " + vectorToStr(c.gain) + ")"
-  runCommandProxy(proxy, instruction)
-
+  return instruction
 

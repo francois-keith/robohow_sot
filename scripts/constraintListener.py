@@ -18,31 +18,29 @@ from dynamic_graph_bridge_msgs.srv import RunCommand
 
 
 """ create the feature """
-def createFeature(proxy, feat):
+def createFeature(feat):
+  instruction = ""
   if feat.type == 0: # LINE
     rospy.loginfo ("TODO LINE feature not handled")
   elif feat.type == 1: # PLANE
     instruction = "createExpression(robot, PlaneElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "normal = "   + vector3ToStr(feat.direction) +","\
       "position = " + vector3ToStr(feat.position ) +"))"
-    runCommandProxy(proxy, instruction)
   elif feat.type == 2: # POINT
     instruction = "createExpression(robot, PointElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "position = " + vector3ToStr(feat.position)  +"))"
-    runCommandProxy(proxy, instruction)
   elif feat.type == 3: # VERSOR
     instruction = "createExpression(robot, VersorElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "versor = "   + vector3ToStr(feat.direction) +"))"
-    runCommandProxy(proxy, instruction)
   else:
    rospy.loginfo ("not handled")
 
-
+  return instruction
 
 """ 
-Create the task, that will be stored in the robot database. 
+Create the task, that will be stored in the robot task database.
 """
-def createConstraint(proxy, constr):
+def createConstraint(constr):
   if constr.function == 0:
     func = 'angle'
   elif constr.function == 1:
@@ -50,41 +48,40 @@ def createConstraint(proxy, constr):
   elif constr.function == 2:
     func = 'position'
   else:
-    rospy.loginfo(": The constraint %s has a unknown type %s" % (c.name, c.function))
+    rospy.loginfo(rospy.get_name() + ": The constraint %s has a unknown type %s" % (c.name, c.function))
 
   bounds = "lowerBound = " + vectorToStr(constr.command.pos_lo)+", "+\
            "upperBound = " + vectorToStr(constr.command.pos_hi)
   instruction = "createTask(robot,'" + constr.name + "', '" + constr.tool_feature.name + "', " +\
                 "'" + constr.world_feature.name+"', '"+ func +"', " +\
                 bounds  +")"
-  runCommandProxy(proxy, instruction)
-
+  return instruction
 
 
 """
-Build the set of constraints (aka stack) and the attached parameterization.
-Update the stack of tasks.
+Build the set of python commands corresponding to a constraints message.
+returns a list of instructions.
 """
-def convertContraintToCommands(proxy, constraints):
-  runCommandProxy(proxy, "superviser.clear()")
+def convertContraintToCommands(constraints):
+  instructions = ["superviser.clear()"]
   for c in constraints:
     # if the type of the task is other, we assume that the task 
     #  has been created in the SoT / does not depend on expression-graph system.
     if c.function != 3:    
-      rospy.loginfo(": Creating the constraint %s, %s" % (c.name, c.function))
-      createFeature(proxy, c.tool_feature)
-      createFeature(proxy, c.world_feature)
-      createConstraint(proxy, c)
+      instructions.append(createFeature(c.tool_feature))
+      instructions.append(createFeature(c.world_feature))
+      instructions.append(createConstraint(c))
 
     # Parameterize the constraint
-    rospy.loginfo(": Parameterizing the constraint %s, %s" % (c.name, c.function))
-    parameterizeContraint(proxy, c.command)
+    instructions.append(parameterizeContraint(c.command))
 
     # Push the stack into the desired stack
-    runCommandProxy(proxy, "superviser.push('" + c.name +"')")
+    instructions.append("superviser.push('" + c.name +"')")
 
   # Actualize the current solver.
-  runCommandProxy(proxy, "superviser.update()")
+  instructions.append("superviser.update()")
+
+  return instructions
 
 #uint8 ANGLE=0			# computes the angle between the two features
 #uint8 DISTANCE=1	# computes the distance between the two features
@@ -106,10 +103,10 @@ class ConstraintListener:
         rospy.init_node('listener', anonymous=True)
 
         # Wait for the run_command service to be started
-        rospy.loginfo("\n " + rospy.get_name() + " waiting for run_command")
+        rospy.loginfo(rospy.get_name() + " waiting for run_command")
         rospy.wait_for_service ('run_command')
         rospy.sleep(1)
-        rospy.loginfo(rospy.get_name() + "run_command obtained")
+        rospy.loginfo(rospy.get_name() + " run_command obtained")
         self.run_command = rospy.ServiceProxy ('run_command', RunCommand)
 
         # Subscribe to the constraint publisher
@@ -118,8 +115,10 @@ class ConstraintListener:
 
     def callback(self, data):
         # convert the constrain and the send the corresponding command
-        convertContraintToCommands(self.run_command, data.constraints)
-
+        instructionList = convertContraintToCommands(data.constraints)
+        if instructionList != []:
+          instruction = regroupCommands(instructionList)
+          runCommandProxy(self.run_command, instruction)
 
 
 # Start the listener
