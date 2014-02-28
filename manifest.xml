@@ -11,7 +11,7 @@
   <depend package="sensor_msgs"/>
   <depend package="geometry_msgs"/>
   <depend package="robohow_common_msgs"/>
-  <depend package="dynamic_graph_bridge"/>
+  <depend package="dynamic_graph_bridge_msgs"/>
 </package>
 
 

@@ -12,8 +12,8 @@ from robohow_common_msgs.msg  import ConstraintCommand
 roslib.load_manifest('dynamic_graph_actionlib')
 from dynamic_graph_actionlib.msg import *
 
-roslib.load_manifest ('dynamic_graph_bridge')
-from dynamic_graph_bridge.srv import RunCommand
+roslib.load_manifest ('dynamic_graph_bridge_msgs')
+from dynamic_graph_bridge_msgs.srv import RunCommand
 
 """
 ConstraintListener listens to the constraints message sent, and converts
