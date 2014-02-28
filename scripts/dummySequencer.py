@@ -204,10 +204,35 @@ class DummySequencer:
   def __init__(self, pubStack, pubParam):
     self.pubStack = pubStack
     self.pubParam = pubParam
+    #self.createGripper()
+    self.reset()
+
+  """ create the action gripper """
+  def createGripper(self):
     self.gripperCall = actionlib.SimpleActionClient('r_gripper_controller/gripper_action',Pr2GripperCommandAction)
     print "Waiting for the gripper server"
     self.gripperCall.wait_for_server()
-    self.reset()
+
+
+  """ open the gripper through action """
+  def openGripper(self):
+    if self.gripperCall != None :
+      self.gripperCall.send_goal(Pr2GripperCommandGoal(\
+        Pr2GripperCommand(position = 0.3, max_effort = -1)))
+      self.gripperCall.wait_for_result()
+#      result = self.gripperCall.get_result()
+      rospy.loginfo ("I have finished the gripper opening")
+
+
+  """ close the gripper through action """
+  def closeGripper(self):
+    if self.gripperCall != None :
+      self.gripperCall.send_goal(Pr2GripperCommandGoal(\
+          Pr2GripperCommand(position = 0.05, max_effort = 50)))
+      self.gripperCall.wait_for_result()
+#      result = self.gripperCall.get_result()
+      rospy.loginfo ("I have finished the gripper closing")
+
 
   """ reinitialize the cram """
   def reset(self):
@@ -235,9 +260,7 @@ class DummySequencer:
     self.stepIndex = 1
     self.pubStack.publish(ConstraintConfig('test', self.stack))
 
-    self.gripperCall.send_goal(Pr2GripperCommandGoal(\
-      Pr2GripperCommand(position = 0.3, max_effort = 50)))
-    self.gripperCall.wait_for_result()
+    self.openGripper()
     
     return EmptyResponse()
 
@@ -256,9 +279,6 @@ class DummySequencer:
 
   def _step1(self):
     rospy.loginfo ("Step: Add gripper task")   
-    self.gripperCall.send_goal(Pr2GripperCommandGoal(\
-        Pr2GripperCommand(position = 0.3, max_effort = 50)))
-    self.gripperCall.wait_for_result()
     #fk self.solver.push(self.r_gripper_angle.task)
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
     
@@ -288,7 +308,7 @@ class DummySequencer:
     # replace the task controlling the orientation of the bottle by the pouring one.
     safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
 #    self.solver.remove(self.tasks['distance-gripperX_bottleX'])
-    self.stack.append(constraints['angle_pouring'])
+    self.closeGripper()
 
 
     #todo: estimate the position of the bottle neck
@@ -405,6 +425,8 @@ if __name__ == '__main__':
 
   stepperSrv = rospy.Service('cram_run_step', Empty, lambda req: d.step())
   resetSrv   = rospy.Service('cram_reset', Empty, lambda req: d.reset())
+  openSrv    = rospy.Service('fk_open', Empty, lambda req: d.openGripper())
+  closeSrv   = rospy.Service('fk_close', Empty, lambda req: d.closeGripper())
 
   # Dummy step by step validation
   rospy.spin()
