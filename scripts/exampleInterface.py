@@ -92,6 +92,12 @@ parameters['position_bung_XY'] = ConstraintCommand(\
 constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
 
 
+
+parameters['taskright-wrist']  = ConstraintCommand('taskright-wrist', 0, [], [], '', [2])
+constraints['taskright-wrist'] = Constraint('taskright-wrist', OTHER, None, None, parameters['taskright-wrist'])
+
+
+
 """ Move the element at the end of the list. """
 def moveLast(list, x):
   if x in list:
@@ -127,6 +133,7 @@ class ExamplePouringSOT:
     self.stack.append(constraints['taskcontact'])
     self.stack.append(constraints['taskbase'])
     self.stack.append(constraints['taskJL'])
+    self.stack.append(constraints['taskright-wrist'])
     self.stack.append(constraints['weight'])
 
     self.stepIndex = 0
@@ -137,6 +144,7 @@ class ExamplePouringSOT:
   # Executing this function will add the pouring task to the SoT
   def _addPouringTask(self):
     rospy.loginfo ("Step: Start pouring")
+    self.stack.remove(constraints['taskright-wrist'])
     self.stack.append(constraints['position_bung_Z'])
     self.stack.append(constraints['position_bung_XY'])
     self.stack.append(constraints['angle_pouring'])

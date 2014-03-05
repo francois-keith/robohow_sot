@@ -15,7 +15,6 @@ def vector3ToStr(vec):
 
 """ Convert a vector of double into a string"""
 def vectorToStr(vec):
-    rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
     st = '('
     for i in range(0, len(vec)):
       s = "%f, " % vec[i]
@@ -25,7 +24,6 @@ def vectorToStr(vec):
 
 """ convert a vector3 to a string """
 def vectorToStr(vec):
-    rospy.loginfo(rospy.get_name() + ": I heard %d" % len(vec))
     st = '('
     for i in range(0, len(vec)):
       s = "%f, " % vec[i]
@@ -35,7 +33,6 @@ def vectorToStr(vec):
 
 """ Regroup a list of python instructions as a single one """ 
 def regroupCommands(instructionList):
-    rospy.loginfo(rospy.get_name() + ": instructionList")
     instruction = instructionList[0]
     for elmt in instructionList[1:]:
       if elmt != "":
@@ -44,10 +41,12 @@ def regroupCommands(instructionList):
 
 """ run an instruction """
 def runCommandProxy(proxy, instruction):
-    #rospy.loginfo ("run instruction: \"%s\"", instruction)
+    if not instruction == "":
+      rospy.logdebug ("run instruction: \"%s\"", instruction)
     result = proxy (instruction)
     #rospy.loginfo ("stdout: \"%s\"", result.stdout)
-    rospy.loginfo ("stderr: \"%s\"", result.stderr)
+    if not result.stderr == "":
+      rospy.loginfo ("stderr: \"%s\"", result.stderr)
 
 
 """

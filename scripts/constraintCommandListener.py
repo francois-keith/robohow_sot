@@ -30,6 +30,7 @@ class ConstraintConfigListener:
         # Wait for the run_command service to be started
         rospy.loginfo("\n " + rospy.get_name() + " waiting for run_command")
         rospy.wait_for_service ('run_command')
+        rospy.sleep(1)
         rospy.loginfo(rospy.get_name() + "run_command obtained")
         self.run_command = rospy.ServiceProxy ('run_command', RunCommand)
 

@@ -4,18 +4,16 @@
   <node name="constraints" pkg="robohow_sot" type="dummySequencer.py" output="screen">
   </node>
 
-  <!--start the feature visualization node -->
-  <node name="feature_viz" pkg="feature_constraints_utils" type="feature_viz.py" output="screen"/>
 
   <!--define some tf for the environment-->
   <node name="tf_bottle" pkg="tf"
         type="static_transform_publisher"
-        args="0.68 -0.27 0.83   0.80  -0.10  -0.066 /odom /bottle 100"/>
+        args="0.6 -0.27 0.7   0.80  -0.10  -0.066 /odom /bottle 100"/>
 
 
   <node name="tf_cup" pkg="tf"
         type="static_transform_publisher"
-        args="0.4 0 0.8  0 0 0 1 /odom /cup 100"/>
+        args="0.6 0 0.6  0 0 0 1 /odom /cup 100"/>
 
   <!-- define environment key elements -->
   <node name="bottle"    pkg="dynamic_graph_bridge" type="tf_publisher">
