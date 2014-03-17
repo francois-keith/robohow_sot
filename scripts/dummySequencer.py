@@ -150,23 +150,6 @@ constraints['position_bung_Z'] = Constraint('position_bung_Z', POSITION, bung, c
 #constraints['tips'] = Constraint('tips', ANGLE, ground_x, r_gripper_y, parameters['tips'] )
 
 
-##     ################################ #######################
-##     ## height of the bottle above the target
-##     self.addExpressions(PointElement('cup', robot, 'cup'))
-##     self.addExpressions(PointElement('bung', robot, 'bung'))
-##     (self.tasks['position_bung_Z'], self.features['position_bung_Z']) = \
-##       createTaskAndFeaturePointToPoint('position_bung_Z', \
-##         self.expressions['bung'], self.expressions['cup'])
-##     self.features['position_bung_Z'].selec.value ='100' #TODO
-##     self.features['position_bung_Z'].reference.value = (-0.05,)
-
-#cup    = Feature('cup', 'cup', Feature.POINT,
-#                   Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0))
-#bung   = Feature('bung', 'bung', Feature.POINT,
-#                   Vector3(0,0,0), Vector3(0,0,0), Vector3(0,0,0))
-
-
-
 """ remove the key from the list, only if it is in the list"""
 def safeRemove(l, key):
  if key in l:
@@ -190,11 +173,13 @@ def moveLast(list, x):
 
 """ A simple sequencer. """
 class DummySequencer:
-  criticalTask = None  # critical task: the
   stepIndex = 0       # current step
   pubStack = None      # publisher for the constraint
   pubParam = None      # publisher for the constrainCommand
   gripperCall = None   # Gripper actionlib calls
+
+  criticalTask = ''         # critical task: the task indicating the level of accomplishment of the step 
+  criticTaskListener = None # Critical task listener.
 
   ### Define the stack that will be sent to the robot.
   stack = []
@@ -214,12 +199,10 @@ class DummySequencer:
     self.stepList.append(lambda:self._step4())
     self.stepList.append(lambda:self._step5())
     self.stepList.append(lambda:self._step6())
-    self.stepList.append(lambda:self._step7())
-    self.stepList.append(lambda:self._step8())
-    self.stepList.append(lambda:self._step9())
+
 
     #self.createGripper()
-    #self.reset()
+
 
   """ create the action gripper """
   def createGripper(self):
@@ -269,7 +252,6 @@ class DummySequencer:
       self.stack.append(constraints['taskbase'])
       self.stack.append(constraints['taskJL'])
       self.stack.append(constraints['weight'])
-    #TODO #stack.append(constraints['robot_task_position'])
 
     self.stepIndex = 0
     self.pubStack.publish(ConstraintConfig('test', self.stack))
@@ -279,37 +261,30 @@ class DummySequencer:
     return EmptyResponse()
 
 
-
   # graps
   def _step0(self):
     rospy.loginfo ("going in front of the bottle")
     safeRemove(self.stack, constraints['robot_task_position'])
     self.stack.append(constraints['position_gripper_bottle'])
-#    stack.append(constraints['angle_gripperZ_bottleZ'])
-
-
+    self.pubStack.publish(ConstraintConfig('test', self.stack))
     self.criticalTask = 'position_gripper_bottle'
-    pubStack.publish(ConstraintConfig('test', self.stack))
 
+
+  # Close the gripper
   def _step1(self):
     rospy.loginfo ("Step: Add gripper task")   
     #fk self.solver.push(self.r_gripper_angle.task)
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
-    
-    # update the criticalTask
     #fk self.criticalTask = self.r_gripper_angle.task
 #self.tasks['angle_pouring']
 
-  # close the gripper
+
+  # Add a task to go to the bottle
   def _step2(self):
     rospy.loginfo ("Step: Going to the bottle")
-    # Add a task to go to the bottle
-    self.stack.append(constraints['taskright-wrist'])
-#    self.stack.append(constraints['distance_bottle_gripper'])
-    #self.solver.push(self.robot.tasks[''])
     safeRemove(self.stack, constraints['position_gripper_bottle'])
-    #self.solver.remove(self.robot.tasks['position_gripper_bottle'])
-    self.criticalTask = 'distance_bottle_gripper'
+    self.stack.append(constraints['taskright-wrist'])
+    self.criticalTask = 'taskright-wrist'
 
   # bent the bottle a little
   def _step2a(self):
@@ -334,11 +309,9 @@ class DummySequencer:
     self.stack.append(constraints['position_bung_Z'])
     self.stack.append(constraints['position_bung_XY'])
     self.stack.append(constraints['angle_pouring'])
-
     self.stack.append(constraints['angle_gripperY_in_ground_plane'])
-#    self.stack.append(constraints['tips'])
-
     self.criticalTask = 'position_bung_Z'
+
 
   # pour a little
   def _step4(self):
@@ -348,61 +321,80 @@ class DummySequencer:
     self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
-  # pour ...
+
+  # Pour more
   def _step5(self):
     rospy.loginfo ("Step: And more")
-    parameters['angle_pouring'].pos_lo = [radians(115)]
-    parameters['angle_pouring'].pos_hi = [radians(115)]
+    parameters['angle_pouring'].pos_lo = [2.4]
+    parameters['angle_pouring'].pos_hi = [2.4]
     self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
+
+  # Step: going to initial position
   def _step6(self):
     rospy.loginfo ("Step: going to initial position")
-    
-    #TODO safeRemove(stack, constraints['FoV'])
     safeRemove(self.stack, constraints['position_bung_Z'])
     safeRemove(self.stack, constraints['position_bung_XY'])
     safeRemove(self.stack, constraints['angle_gripperY_in_ground_plane'])
     safeRemove(self.stack, constraints['angle_pouring'])
-
-#    parameters['angle_pouring'].pos_lo = [radians(85)]
-#    parameters['angle_pouring'].pos_hi = [radians(85)]
-#    self.pubParam.publish(parameters['angle_pouring'])
-    #self.criticalTask = 'taskRH'
-    
     self.stack.append(constraints['taskright-wrist'])
-
-
-
-  def _step7(self):
-#    self.stack.append(constraints['distance_bottle_gripper'])
-#    self.stack.append(constraints['angle_gripperZ_bottleZ'])
-    criticalTask = 'distance_bottle_gripper'
-
-  def _step8(self):
-    #r_gripper_angle.featureDes.errorIN.value = (1,0)
-    criticalTask = 'r_gripper_angle.task'
-
-  def _step9(self):
-    #solver.remove(self.r_gripper_angle.task)
-    criticalTask = None
+    self.criticalTask = 'taskright-wrist'
 
 
   """ run a step """
   def step(self):
+    if(self.criticalTask != '' and self.criticTaskListener != None):
+      del self.criticTaskListener
+
     if self.stepIndex < len(self.stepList):
       self.stepList[self.stepIndex]()
       moveLast(self.stack, constraints['weight'])
       self.pubStack.publish(ConstraintConfig('test', self.stack))
+
+      # change the critical task listened to.
       print "step ", self.stepIndex
+      if(self.criticalTask != ''):
+        self.criticTaskListener = CritiqueTaskListener(self, self.criticalTask)
 
       # increase step number
       self.stepIndex = self.stepIndex + 1
     else:
       print "No more things to do."
       print "You can reset the demonstration using the cram_reset service "
-      
+#      self.reset()
+#      self.step()
+
     return EmptyResponse()
+
+
+"""
+Create a listener for the given task
+The listener tasks in parameter the name of the task and its completion range (optional)
+"""
+class CritiqueTaskListener:
+  sequencer = None
+  finished  = False 
+  threshold = 0
+  
+  # 
+  def __init__(self, sequencer, taskname, threshold = 1e-2):
+    self.finished  = False 
+    self.sequencer = sequencer
+    self.threshold = threshold
+
+    # create the subscriber for the given task
+    if taskname != '':
+      sig_name = '/sot/'+taskname+'_error_norm'
+      sig_name = sig_name.replace('-', '_')
+      print "Start listening to ", sig_name
+      rospy.Subscriber(sig_name, Float64, self.callback)
+
+  # Callback: if the task is finished, call a step
+  def callback(self, val):
+    if(self.finished == False and val.data <= self.threshold):
+      self.sequencer.step()
+      self.finished = True
 
 
 
@@ -418,7 +410,6 @@ if __name__ == '__main__':
   resetSrv   = rospy.Service('cram_reset', Empty, lambda req: d.reset())
   openSrv    = rospy.Service('fk_open', Empty, lambda req: d.openGripper())
   closeSrv   = rospy.Service('fk_close', Empty, lambda req: d.closeGripper())
-
   # Dummy step by step validation
   rospy.spin()
 
