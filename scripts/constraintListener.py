@@ -16,12 +16,13 @@ roslib.load_manifest ('dynamic_graph_bridge_msgs')
 from dynamic_graph_bridge_msgs.srv import RunCommand
 
 
-
 """ create the feature """
 def createFeature(feat):
   instruction = ""
   if feat.type == 0: # LINE
-    rospy.loginfo ("TODO LINE feature not handled")
+    instruction = "createExpression(robot, LineElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
+      "normal = "   + vector3ToStr(feat.direction) +","\
+      "position = " + vector3ToStr(feat.position ) +"))"
   elif feat.type == 1: # PLANE
     instruction = "createExpression(robot, PlaneElement('"+feat.name+"', robot, '"+feat.frame_id+"', "+\
       "normal = "   + vector3ToStr(feat.direction) +","\
