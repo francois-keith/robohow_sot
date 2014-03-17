@@ -38,16 +38,19 @@ def createFeature(feat):
 
   return instruction
 
+
 """ 
 Create the task, that will be stored in the robot task database.
 """
 def createConstraint(constr):
-  if constr.function == 0:
+  if constr.function == 1  :
     func = 'angle'
-  elif constr.function == 1:
-    func = 'distance'
   elif constr.function == 2:
+    func = 'distance'
+  elif constr.function == 3:
     func = 'position'
+  elif constr.function == 4:
+    func = 'pointing_at'
   else:
     rospy.loginfo(rospy.get_name() + ": The constraint %s has a unknown type %s" % (c.name, c.function))
 
@@ -68,7 +71,7 @@ def convertContraintToCommands(constraints):
   for c in constraints:
     # if the type of the task is other, we assume that the task 
     #  has been created in the SoT / does not depend on expression-graph system.
-    if c.function != 3:    
+    if c.function != 0:
       instructions.append(createFeature(c.tool_feature))
       instructions.append(createFeature(c.world_feature))
       instructions.append(createConstraint(c))
@@ -83,12 +86,6 @@ def convertContraintToCommands(constraints):
   instructions.append("superviser.update()")
 
   return instructions
-
-#uint8 ANGLE=0			# computes the angle between the two features
-#uint8 DISTANCE=1	# computes the distance between the two features
-#uint8 POSITION=2	# compute the difference of position between the two features
-#uint8 function  # name of the constraint function ('perpendicular', etc.)
-
 
 
 """

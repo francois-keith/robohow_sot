@@ -10,20 +10,20 @@ import rospy
 import actionlib #for the gripper
 
 from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature, ConstraintCommand
+from std_msgs.msg import Float64
 from geometry_msgs.msg import Vector3
 from numpy import radians
 from actionlib_msgs.msg import *
 from pr2_controllers_msgs.msg import *
 
-
 from std_srvs.srv import Empty, EmptyResponse
 
-
 # Reminder: object types.
-ANGLE=0
-DISTANCE=1
-POSITION=2
-OTHER=3
+OTHER=0
+ANGLE=1
+DISTANCE=2
+POSITION=3
+POINTING_AT=4
 
 ################################# Create the tasks for the pouring task
 
