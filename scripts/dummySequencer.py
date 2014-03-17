@@ -83,18 +83,18 @@ constraints['taskbase'] = Constraint('taskbase', OTHER, None, None, None)
 constraints['taskJL'] = Constraint('taskJL', OTHER, None, None, None)
 constraints['weight'] = Constraint('weight', OTHER, None, None, None)
 
-parameters['taskright-wrist']  = ConstraintCommand('taskright-wrist', 0, [], [], '', [1])
+parameters['taskright-wrist']  = ConstraintCommand('taskright-wrist', [], [], '', [1])
 constraints['taskright-wrist'] = Constraint('taskright-wrist', OTHER, None, None, parameters['taskright-wrist'])
 
 ### Define the constraints with initial parameters.
 # angle_gripperZ_bottleZ: the gripper is oriented with the Z axis of the bottle
 parameters['angle_gripperZ_bottleZ']  = ConstraintCommand(\
-  'angle_gripperZ_bottleZ', 0, [radians(180)], [radians(180)], '', [0.5])
+  'angle_gripperZ_bottleZ', [radians(180)], [radians(180)], '', [0.5])
 constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', ANGLE, r_gripper_uz, bottle_z, parameters['angle_gripperZ_bottleZ'] )
 
 # position_gripper_bottle: the gripper is at the same height as the can.
 parameters['position_gripper_bottle']  = ConstraintCommand(\
-  'position_gripper_bottle', 0, [0.1, 0, 0], [0.1, 0, 0], '111', [0.5])
+  'position_gripper_bottle', [0.1, 0, 0], [0.1, 0, 0], '111', [0.5])
 constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', POSITION, r_gripper, bottle, parameters['position_gripper_bottle'])
 
 
@@ -102,18 +102,18 @@ constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', 
 # 90* => the Z axis of the world and the Z axis of the bottle are colinear
 #  0* => the bottle is horizontal
 parameters['angle_pouring'] = ConstraintCommand(\
-  'angle_pouring', 0, [radians(90)], [radians(90)], '', [])
+  'angle_pouring', [radians(90)], [radians(90)], '', [])
 constraints['angle_pouring'] = Constraint('angle_pouring', ANGLE, bung_x, ground_z, parameters['angle_pouring'])
 
 
 # Constrain the rotation of the gripper to keep the hand horizontal 
 parameters['angle_gripperY_in_ground_plane'] = angle_gripperY_in_ground_plane_Param = ConstraintCommand(\
-  'angle_gripperY_in_ground_plane', 0, [radians(0)], [radians(0)], '', [])
+  'angle_gripperY_in_ground_plane', [radians(0)], [radians(0)], '', [])
 constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  ANGLE,  ground_plane, r_gripper_y, parameters['angle_gripperY_in_ground_plane'])
 
 # Distance bottle / r_hand
 parameters['distance_bottle_gripper'] = ConstraintCommand(\
-  'distance_bottle_gripper', 0, [radians(0)], [radians(0)], '', [])
+  'distance_bottle_gripper', [radians(0)], [radians(0)], '', [])
 constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', DISTANCE, r_gripper, bottle, parameters['distance_bottle_gripper'])
 
 
@@ -121,13 +121,13 @@ constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', D
 ################################ #######################
 ## height of the bottle above the target
 parameters['position_bung_Z'] = ConstraintCommand(\
-   'position_bung_Z', 0, [0.0], [0.0], '100', [])
+   'position_bung_Z', [0.0], [0.0], '100', [])
   #'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
 constraints['position_Z_bung'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
 #######################################################
 parameters['position_rg_XY'] = ConstraintCommand(\
-  'position_rg_XY', 0, [0.02], [100], '', [])
+  'position_rg_XY', [0.02], [100], '', [])
 constraints['position_rg_XY'] = Constraint('position_rg_XY', DISTANCE, cup, r_gripper, parameters['position_rg_XY'])
 
 
@@ -135,15 +135,14 @@ constraints['position_rg_XY'] = Constraint('position_rg_XY', DISTANCE, cup, r_gr
 ## position of the bottle above the target.
 ## inequality task: we want the bottle to be above the recipient
 parameters['position_bung_XY'] = ConstraintCommand(\
-  'position_bung_XY', 0, [-0.025,-0.025], [ 0.025, 0.025], '011', [])
+  'position_bung_XY', [-0.025,-0.025], [ 0.025, 0.025], '011', [])
 constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
 
 # ---- TASKS corresponding the manipulation of the bottle ---
 ################################ #######################
 ## height of the bottle above the target
 parameters['position_bung_Z'] = ConstraintCommand(\
-   'position_bung_Z', 0, [0.0], [0.0], '100', [])
-  #'position_bung_Z', 0, [-0.05], [-0.05], '100', [])
+   'position_bung_Z', [0.0], [0.0], '100', [])
 constraints['position_bung_Z'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
 #
