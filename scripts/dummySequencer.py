@@ -178,6 +178,7 @@ class DummySequencer:
   pubParam = None      # publisher for the constrainCommand
   gripperCall = None   # Gripper actionlib calls
 
+  oldCriticalTask = ''
   criticalTask = ''         # critical task: the task indicating the level of accomplishment of the step 
   criticTaskListener = None # Critical task listener.
 
@@ -186,6 +187,7 @@ class DummySequencer:
 
   """ Constructor """
   def __init__(self, pubStack, pubParam):
+    self.oldCriticalTask = ''
     self.pubStack = pubStack
     self.pubParam = pubParam
 
@@ -341,21 +343,39 @@ class DummySequencer:
     self.stack.append(constraints['taskright-wrist'])
     self.criticalTask = 'taskright-wrist'
 
+  """ get the critical task """
+  def getCriticalTask(self):
+    return self.criticalTask
 
   """ run a step """
   def step(self):
-    if(self.criticalTask != '' and self.criticTaskListener != None):
-      del self.criticTaskListener
-
     if self.stepIndex < len(self.stepList):
+      # backup critical task
+      self.oldCriticalTask = self.criticalTask
+
+      # next step
       self.stepList[self.stepIndex]()
+
+      # post step command.
       moveLast(self.stack, constraints['weight'])
+
+      # destroy / pause the current task listener
+      if(self.criticalTask != '' and self.criticTaskListener != None):
+        if self.criticalTask != self.oldCriticalTask:
+          self.criticTaskListener.destroy()
+          del self.criticTaskListener
+          self.criticTaskListener = None
+
+      # send the new stack to the SoT
+      print "step ", self.stepIndex
       self.pubStack.publish(ConstraintConfig('test', self.stack))
 
       # change the critical task listened to.
-      print "step ", self.stepIndex
-      if(self.criticalTask != ''):
-        self.criticTaskListener = CritiqueTaskListener(self, self.criticalTask)
+      if self.criticalTask != '':
+        if self.criticTaskListener == None:
+          self.criticTaskListener = CritiqueTaskListener(self, self.criticalTask)
+        else:
+          self.criticTaskListener.reactivateListener()
 
       # increase step number
       self.stepIndex = self.stepIndex + 1
@@ -374,29 +394,48 @@ The listener tasks in parameter the name of the task and its completion range (o
 """
 class CritiqueTaskListener:
   sequencer = None
+  subscriber = None
   finished  = False 
   threshold = 0
+  taskname  = ''
+  numEvaluation = 1
   
   # 
   def __init__(self, sequencer, taskname, threshold = 1e-2):
     self.finished  = False 
+    self.taskname  = taskname
     self.sequencer = sequencer
     self.threshold = threshold
+    self.numEvaluation = 0
 
     # create the subscriber for the given task
     if taskname != '':
       sig_name = '/sot/'+taskname+'_error_norm'
       sig_name = sig_name.replace('-', '_')
       print "Start listening to ", sig_name
-      rospy.Subscriber(sig_name, Float64, self.callback)
+      self.subscriber = rospy.Subscriber(sig_name, Float64, self.callback)
 
   # Callback: if the task is finished, call a step
   def callback(self, val):
-    if(self.finished == False and val.data <= self.threshold):
-      self.sequencer.step()
-      self.finished = True
+    if self.finished == True:
+      return
 
+    if(val.data <= self.threshold):
+      print self.numEvaluation, "   val.data  ", val.data
+      if self.numEvaluation <= 0 :
+        self.finished = True
+        if (self.sequencer.getCriticalTask() == self.taskname):
+          self.sequencer.step()
+      else:
+        self.numEvaluation = self.numEvaluation - 1
 
+  def reactivateListener(self, numEvaluation = 5):
+    self.finished = False
+    self.numEvaluation = numEvaluation
+
+  def destroy(self):
+    print "unregister ", self.taskname
+    self.subscriber.unregister
 
 if __name__ == '__main__':
   ## OK, let's go!
