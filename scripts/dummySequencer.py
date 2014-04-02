@@ -5,7 +5,6 @@
 
 import roslib
 roslib.load_manifest('robohow_common_msgs')
-roslib.load_manifest('pr2_controllers_msgs') # gripper msgs
 import rospy
 import actionlib #for the gripper
 
@@ -14,6 +13,8 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import Vector3
 from numpy import radians
 from actionlib_msgs.msg import *
+
+roslib.load_manifest('pr2_controllers_msgs') # gripper msgs
 from pr2_controllers_msgs.msg import *
 
 from std_srvs.srv import Empty, EmptyResponse
@@ -81,6 +82,7 @@ constraints['robot_task_position']    = Constraint('robot_task_position', OTHER,
 constraints['taskcontact'] = Constraint('taskcontact', OTHER, None, None, None)
 constraints['taskbase'] = Constraint('taskbase', OTHER, None, None, None)
 constraints['taskJL'] = Constraint('taskJL', OTHER, None, None, None)
+constraints['chest'] = Constraint('chest', OTHER, None, None, None)
 constraints['weight'] = Constraint('weight', OTHER, None, None, None)
 
 parameters['taskright-wrist']  = ConstraintCommand('taskright-wrist', [], [], '', [1])
@@ -347,6 +349,27 @@ class DummySequencer:
   def getCriticalTask(self):
     return self.criticalTask
 
+
+  """ manipulation of the stacks before the update of the stack state"""
+  def pre_update(self):
+    return
+
+  """ manipulation of the stacks before the after of the stack state"""
+  def post_update(self):
+    if self.robot == "pr2":
+      # move the weighting task at the end of the stack
+      moveLast(self.stack, constraints['weight'])
+    return
+
+  """ update the stack: run the index given in index """
+  def updateStack(self, index):
+    self.pre_update()
+    self.stepList[self.stepIndex]()
+    self.post_update()
+
+
+
+
   """ run a step """
   def step(self):
     if self.stepIndex < len(self.stepList):
@@ -354,7 +377,7 @@ class DummySequencer:
       self.oldCriticalTask = self.criticalTask
 
       # next step
-      self.stepList[self.stepIndex]()
+      self.updateStack(self.stepIndex)
 
       # post step command.
       moveLast(self.stack, constraints['weight'])
