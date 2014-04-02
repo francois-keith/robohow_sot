@@ -1,7 +1,8 @@
 #!/usr/bin/python
-
-# Constraint configuration for pancake flipping.
-# A feature-based configuration, imitating the cylinder/orientation setup.
+# Constraint configuration for pouring task
+# Requires the following rosparams:
+#  robot:      indicates the name of the robot.
+#  kinematics: indicates if it is only a kinematic simulation
 
 import roslib
 roslib.load_manifest('robohow_common_msgs')
@@ -184,6 +185,7 @@ class DummySequencer:
   criticalTask = ''         # critical task: the task indicating the level of accomplishment of the step 
   criticTaskListener = None # Critical task listener.
 
+  robot = "" # Name of the robot
   ### Define the stack that will be sent to the robot.
   stack = []
 
@@ -193,26 +195,29 @@ class DummySequencer:
     self.pubStack = pubStack
     self.pubParam = pubParam
 
+    self.robot = (rospy.get_param("robot")).lower()
+    self.kinematics = rospy.get_param("kinematics")
+
     self.stepList = [] 
     self.stepList.append(lambda:self.reset())
     self.stepList.append(lambda:self._step0())
-    self.stepList.append(lambda:self._step1())
-    self.stepList.append(lambda:self._step2())
-    self.stepList.append(lambda:self._step2a())
+    self.stepList.append(lambda:self._step2b())
     self.stepList.append(lambda:self._step3())
     self.stepList.append(lambda:self._step4())
     self.stepList.append(lambda:self._step5())
     self.stepList.append(lambda:self._step6())
 
-
-    #self.createGripper()
+    # are we in kinematic simulation or not?
+    if self.kinematics == False and self.robot == "pr2" :
+      self.createGripper()
 
 
   """ create the action gripper """
   def createGripper(self):
     self.gripperCall = actionlib.SimpleActionClient('r_gripper_controller/gripper_action',Pr2GripperCommandAction)
-    print "Waiting for the gripper server"
+    rospy.logwarn ("Waiting for the gripper server")
     self.gripperCall.wait_for_server()
+    print "Gripper server acquired"
 
 
   """ open the gripper through action """
@@ -221,8 +226,9 @@ class DummySequencer:
       self.gripperCall.send_goal(Pr2GripperCommandGoal(\
         Pr2GripperCommand(position = 0.3, max_effort = -1)))
       self.gripperCall.wait_for_result()
-#      result = self.gripperCall.get_result()
+      result = self.gripperCall.get_result()
       rospy.loginfo ("I have finished the gripper opening")
+#      self.step()
 
 
   """ close the gripper through action """
@@ -231,8 +237,10 @@ class DummySequencer:
       self.gripperCall.send_goal(Pr2GripperCommandGoal(\
           Pr2GripperCommand(position = 0.05, max_effort = 50)))
       self.gripperCall.wait_for_result()
-#      result = self.gripperCall.get_result()
+      result = self.gripperCall.get_result()
+      print result
       rospy.loginfo ("I have finished the gripper closing")
+#      self.step()
 
 
   """ reinitialize the cram """
@@ -240,21 +248,20 @@ class DummySequencer:
     rospy.loginfo ("Reset")
 
     # Add the basic tasks for humanoid/mobile robot
-    robot = rospy.get_param("robot")
-    isHumanoid = rospy.get_param("humanoid")
-    if robot.lower() == "hrp4" or robot.lower() == "romeo":
-      isHumanoid = True
+    isHumanoid = (self.robot == "hrp4" or self.robot == "romeo")
 
     if isHumanoid == True:
       self.stack = []
       self.stack.append(constraints['robot_task_com'])
       self.stack.append(constraints['robot_task_left-ankle'])
       self.stack.append(constraints['robot_task_right-ankle'])
+      self.stack.append(constraints['robot_task_position'])
     else:
       self.stack = []
       self.stack.append(constraints['taskcontact'])
       self.stack.append(constraints['taskbase'])
       self.stack.append(constraints['taskJL'])
+      self.stack.append(constraints['robot_task_position'])
       self.stack.append(constraints['weight'])
 
     self.stepIndex = 0
@@ -267,12 +274,15 @@ class DummySequencer:
 
   # graps
   def _step0(self):
-    rospy.loginfo ("going in front of the bottle")
+    rospy.loginfo ("release position task")
     safeRemove(self.stack, constraints['robot_task_position'])
-    self.stack.append(constraints['position_gripper_bottle'])
-    self.pubStack.publish(ConstraintConfig('test', self.stack))
-    self.criticalTask = 'position_gripper_bottle'
+#    self.pubStack.publish(ConstraintConfig('test', self.stack))
 
+  def _step0a(self):
+    rospy.loginfo ("going in front of the bottle")
+    self.stack.append(constraints['position_gripper_bottle'])
+#    self.pubStack.publish(ConstraintConfig('test', self.stack))
+    self.criticalTask = 'position_gripper_bottle'
 
   # Close the gripper
   def _step1(self):
@@ -281,7 +291,6 @@ class DummySequencer:
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
     #fk self.criticalTask = self.r_gripper_angle.task
 #self.tasks['angle_pouring']
-
 
   # Add a task to go to the bottle
   def _step2(self):
@@ -302,6 +311,21 @@ class DummySequencer:
     safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
 #    self.solver.remove(self.tasks['distance-gripperX_bottleX'])
     self.closeGripper()
+
+
+
+  def _step2b(self):
+    rospy.loginfo ("Step: Going to the bottle")
+    safeRemove(self.stack, constraints['position_gripper_bottle'])
+    self.stack.append(constraints['taskright-wrist'])
+    self.criticalTask = 'taskright-wrist'
+
+    # replace the task controlling the orientation of the bottle by the pouring one.
+    safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
+    self.closeGripper()
+
+
+
 
 
     #todo: estimate the position of the bottle neck
