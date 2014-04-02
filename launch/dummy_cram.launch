@@ -11,14 +11,6 @@
 
 
   <!--define some tf for the environment-->
-  <node name="tf_bottle" pkg="tf"
-        type="static_transform_publisher"
-        args="0.6 -0.27 0.7   0.80  -0.10  -0.066 /odom /bottle 100"/>
-
-  <node name="tf_cup" pkg="tf"
-        type="static_transform_publisher"
-        args="0.6 0 0.6  0 0 0 1 /odom /cup 100"/>
-
   <node name="tf_bung" pkg="tf"
         type="static_transform_publisher"
         args="0 0 0.1 0 0 0  /r_gripper_tool_frame /bung 100"/>
