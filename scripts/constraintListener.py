@@ -116,6 +116,7 @@ class ConstraintListener:
         instructionList = convertContraintToCommands(data.constraints)
         if instructionList != []:
           instruction = regroupCommands(instructionList)
+          print instruction
           runCommandProxy(self.run_command, instruction)
 
 
