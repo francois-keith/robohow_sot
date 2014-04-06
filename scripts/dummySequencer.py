@@ -44,6 +44,8 @@ bung   = Feature('bung', 'bung', Feature.POINT,
                   Vector3(0,0,0), Vector3(0,0,0))
 bung_x = Feature('bung_x', 'bung', Feature.VERSOR,
                   Vector3(0,0,0), Vector3(1,0,0))
+bung_z = Feature('bung_z', 'bung', Feature.VERSOR,
+                  Vector3(0,0,0), Vector3(0,0,1))
 
 ground_plane = Feature('ground_plane', 'ground', Feature.PLANE,
                   Vector3(0,0,0), Vector3(0,0,1))
@@ -114,6 +116,10 @@ constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', 
 parameters['angle_pouring'] = ConstraintCommand(\
   'angle_pouring', [radians(90)], [radians(90)], '', [])
 constraints['angle_pouring'] = Constraint('angle_pouring', ANGLE, bung_x, ground_z, parameters['angle_pouring'])
+
+parameters['angle_pouring2'] = ConstraintCommand(\
+  'angle_pouring2', [radians(60)], [radians(60)], '', [])
+constraints['angle_pouring2'] = Constraint('angle_pouring2', ANGLE, bung_z, ground_z, parameters['angle_pouring2'])
 
 
 # Constrain the rotation of the gripper to keep the hand horizontal 
@@ -350,8 +356,8 @@ class DummySequencer:
   # pour a little
   def _step4(self):
     rospy.loginfo ("Step: Pouring more")
-    parameters['angle_pouring'].pos_lo = [radians(150)]
-    parameters['angle_pouring'].pos_hi = [radians(150)]
+    parameters['angle_pouring'].pos_lo = [radians(135)]
+    parameters['angle_pouring'].pos_hi = [radians(135)]
     self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
@@ -359,18 +365,17 @@ class DummySequencer:
   # Pour more
   def _step5(self):
     rospy.loginfo ("Step: And more")
-    parameters['angle_pouring'].pos_lo = [3.7]
-    parameters['angle_pouring'].pos_hi = [3.7]
-    self.pubParam.publish(parameters['angle_pouring'])
-    self.criticalTask = ''
+    safeRemove(self.stack, constraints['angle_pouring'])
+    self.stack.append(constraints['angle_pouring2'])
+    self.pubParam.publish(parameters['angle_pouring2'])
 
   # Pour more
   def _step5b(self):
     rospy.loginfo ("Step: And more")
-    parameters['angle_pouring'].pos_lo = [radians(100)]
-    parameters['angle_pouring'].pos_hi = [radians(100)]
-    self.pubParam.publish(parameters['angle_pouring'])
-    self.criticalTask = 'angle_pouring'
+    parameters['angle_pouring2'].pos_lo = [radians(0)]
+    parameters['angle_pouring2'].pos_hi = [radians(0)]
+    self.pubParam.publish(parameters['angle_pouring2'])
+    self.criticalTask = 'angle_pouring2'
 
 
   # Step: going to initial position
@@ -379,7 +384,7 @@ class DummySequencer:
     safeRemove(self.stack, constraints['position_bung_Z'])
     safeRemove(self.stack, constraints['position_bung_XY'])
     safeRemove(self.stack, constraints['angle_gripperY_in_ground_plane'])
-    safeRemove(self.stack, constraints['angle_pouring'])
+    safeRemove(self.stack, constraints['angle_pouring2'])
     self.stack.append(constraints['robot_task_position'])
 #    self.stack.append(constraints['taskleft-wrist'])
 #    self.criticalTask = 'taskleft-wrist'
