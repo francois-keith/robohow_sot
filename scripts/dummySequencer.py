@@ -51,18 +51,22 @@ ground_plane = Feature('ground_plane', 'ground', Feature.PLANE,
 # Name of the feature
 l_gripper    = Feature('l_gripper', 'l_gripper', Feature.POINT,
                    Vector3(0,0,0), Vector3(0,0,0))
+l_gripper_y = Feature('l_gripper_y', 'l_gripper', Feature.VERSOR,
+                  Vector3(0,0,0), Vector3(0,1,0))
 l_gripper_z  = Feature('l_gripper_z', 'l_gripper', Feature.VERSOR,
                    Vector3(0,0,0), Vector3(0,1,0))
-
-# 
-r_gripper   = Feature('r_gripper', 'r_gripper', Feature.POINT,
-                  Vector3(0,0,0), Vector3(0,0,0))
-r_gripper_y = Feature('r_gripper_y', 'r_gripper', Feature.VERSOR,
-                  Vector3(0,0,0), Vector3(0,1,0))
-r_gripper_z = Feature('r_gripper_z', 'r_gripper', Feature.VERSOR,
-                  Vector3(0,0,0), Vector3(0,0,1))
-r_gripper_uz  = Feature('r_gripper_uz', 'r_gripper', Feature.VERSOR,
+l_gripper_uz  = Feature('l_gripper_uz', 'l_gripper', Feature.VERSOR,
                    Vector3(0,0,0), Vector3(0,0,-1))
+
+
+#r_gripper   = Feature('r_gripper', 'r_gripper', Feature.POINT,
+#                  Vector3(0,0,0), Vector3(0,0,0))
+#r_gripper_y = Feature('r_gripper_y', 'r_gripper', Feature.VERSOR,
+#                  Vector3(0,0,0), Vector3(0,1,0))
+#r_gripper_z = Feature('r_gripper_z', 'r_gripper', Feature.VERSOR,
+#                  Vector3(0,0,0), Vector3(0,0,1))
+#r_gripper_uz  = Feature('r_gripper_uz', 'r_gripper', Feature.VERSOR,
+#                   Vector3(0,0,0), Vector3(0,0,-1))
 
 bottle   = Feature('bottle', 'bottle', Feature.POINT,
                   Vector3(0,0,0), Vector3(0,0,0))
@@ -89,16 +93,19 @@ constraints['weight'] = Constraint('weight', OTHER, None, None, None)
 parameters['taskright-wrist']  = ConstraintCommand('taskright-wrist', [], [], '', [1])
 constraints['taskright-wrist'] = Constraint('taskright-wrist', OTHER, None, None, parameters['taskright-wrist'])
 
+parameters['taskleft-wrist']  = ConstraintCommand('taskleft-wrist', [], [], '', [1])
+constraints['taskleft-wrist'] = Constraint('taskleft-wrist', OTHER, None, None, parameters['taskleft-wrist'])
+
 ### Define the constraints with initial parameters.
 # angle_gripperZ_bottleZ: the gripper is oriented with the Z axis of the bottle
 parameters['angle_gripperZ_bottleZ']  = ConstraintCommand(\
   'angle_gripperZ_bottleZ', [radians(180)], [radians(180)], '', [0.5])
-constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', ANGLE, r_gripper_uz, bottle_z, parameters['angle_gripperZ_bottleZ'] )
+constraints['angle_gripperZ_bottleZ'] = Constraint ('angle_gripperZ_bottleZ', ANGLE, l_gripper_uz, bottle_z, parameters['angle_gripperZ_bottleZ'] )
 
 # position_gripper_bottle: the gripper is at the same height as the can.
 parameters['position_gripper_bottle']  = ConstraintCommand(\
   'position_gripper_bottle', [0.1, 0, 0], [0.1, 0, 0], '111', [0.5])
-constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', POSITION, r_gripper, bottle, parameters['position_gripper_bottle'])
+constraints['position_gripper_bottle'] = Constraint ('position_gripper_bottle', POSITION, l_gripper, bottle, parameters['position_gripper_bottle'])
 
 
 # Constrain the rotation of the bottle for the pouring task : 
@@ -112,12 +119,12 @@ constraints['angle_pouring'] = Constraint('angle_pouring', ANGLE, bung_x, ground
 # Constrain the rotation of the gripper to keep the hand horizontal 
 parameters['angle_gripperY_in_ground_plane'] = angle_gripperY_in_ground_plane_Param = ConstraintCommand(\
   'angle_gripperY_in_ground_plane', [radians(0)], [radians(0)], '', [])
-constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  ANGLE,  ground_plane, r_gripper_y, parameters['angle_gripperY_in_ground_plane'])
+constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  ANGLE,  ground_plane, l_gripper_y, parameters['angle_gripperY_in_ground_plane'])
 
 # Distance bottle / r_hand
 parameters['distance_bottle_gripper'] = ConstraintCommand(\
   'distance_bottle_gripper', [radians(0)], [radians(0)], '', [])
-constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', DISTANCE, r_gripper, bottle, parameters['distance_bottle_gripper'])
+constraints['distance_bottle_gripper'] = Constraint('distance_bottle_gripper', DISTANCE, l_gripper, bottle, parameters['distance_bottle_gripper'])
 
 
 # ---- TASKS corresponding the manipulation of the bottle ---
@@ -131,7 +138,7 @@ constraints['position_Z_bung'] = Constraint('position_bung_Z', POSITION, bung, c
 #######################################################
 parameters['position_rg_XY'] = ConstraintCommand(\
   'position_rg_XY', [0.02], [100], '', [])
-constraints['position_rg_XY'] = Constraint('position_rg_XY', DISTANCE, cup, r_gripper, parameters['position_rg_XY'])
+constraints['position_rg_XY'] = Constraint('position_rg_XY', DISTANCE, cup, l_gripper, parameters['position_rg_XY'])
 
 
 #######################################################
@@ -141,6 +148,10 @@ parameters['position_bung_XY'] = ConstraintCommand(\
   'position_bung_XY', [-0.025,-0.025], [ 0.025, 0.025], '011', [])
 constraints['position_bung_XY'] = Constraint('position_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
 
+#parameters['position_bung_XY'] = ConstraintCommand(\
+#  'position_bung_XY', [0], [ 0.05], '011', [])
+#constraints['position_bung_XY'] = Constraint('distance_bung_XY', POSITION, cup, bung, parameters['position_bung_XY'])
+
 # ---- TASKS corresponding the manipulation of the bottle ---
 ################################ #######################
 ## height of the bottle above the target
@@ -148,9 +159,6 @@ parameters['position_bung_Z'] = ConstraintCommand(\
    'position_bung_Z', [0.0], [0.0], '100', [])
 constraints['position_bung_Z'] = Constraint('position_bung_Z', POSITION, bung, cup, parameters['position_bung_Z'])
 
-#
-#parameters['tips']  = ConstraintCommand('tips', 0, [2.5], [2.5], '', [])
-#constraints['tips'] = Constraint('tips', ANGLE, ground_x, r_gripper_y, parameters['tips'] )
 
 
 """ remove the key from the list, only if it is in the list"""
@@ -201,10 +209,11 @@ class DummySequencer:
     self.stepList = [] 
     self.stepList.append(lambda:self.reset())
     self.stepList.append(lambda:self._step0())
-    self.stepList.append(lambda:self._step2b())
+#    self.stepList.append(lambda:self._step2b())
     self.stepList.append(lambda:self._step3())
     self.stepList.append(lambda:self._step4())
     self.stepList.append(lambda:self._step5())
+    self.stepList.append(lambda:self._step5b())
     self.stepList.append(lambda:self._step6())
 
     # are we in kinematic simulation or not?
@@ -276,40 +285,29 @@ class DummySequencer:
   def _step0(self):
     rospy.loginfo ("release position task")
     safeRemove(self.stack, constraints['robot_task_position'])
-#    self.pubStack.publish(ConstraintConfig('test', self.stack))
 
   def _step0a(self):
     rospy.loginfo ("going in front of the bottle")
     self.stack.append(constraints['position_gripper_bottle'])
-#    self.pubStack.publish(ConstraintConfig('test', self.stack))
     self.criticalTask = 'position_gripper_bottle'
 
   # Close the gripper
   def _step1(self):
     rospy.loginfo ("Step: Add gripper task")   
-    #fk self.solver.push(self.r_gripper_angle.task)
-    #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
-    #fk self.criticalTask = self.r_gripper_angle.task
-#self.tasks['angle_pouring']
 
   # Add a task to go to the bottle
   def _step2(self):
     rospy.loginfo ("Step: Going to the bottle")
     safeRemove(self.stack, constraints['position_gripper_bottle'])
-    self.stack.append(constraints['taskright-wrist'])
-    self.criticalTask = 'taskright-wrist'
+    self.stack.append(constraints['taskleft-wrist'])
+    self.criticalTask = 'taskleft-wrist'
 
   # bent the bottle a little
   def _step2a(self):
     rospy.loginfo ("Step: Grasping")
-    #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0.4)
-#    self.r_gripper_angle.close()
-    # update the criticalTask
-    #fk self.criticalTask = self.r_gripper_angle.task
 
     # replace the task controlling the orientation of the bottle by the pouring one.
     safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
-#    self.solver.remove(self.tasks['distance-gripperX_bottleX'])
     self.closeGripper()
 
 
@@ -317,8 +315,8 @@ class DummySequencer:
   def _step2b(self):
     rospy.loginfo ("Step: Going to the bottle")
     safeRemove(self.stack, constraints['position_gripper_bottle'])
-    self.stack.append(constraints['taskright-wrist'])
-    self.criticalTask = 'taskright-wrist'
+    self.stack.append(constraints['taskleft-wrist'])
+    self.criticalTask = 'taskleft-wrist'
 
     # replace the task controlling the orientation of the bottle by the pouring one.
     safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
@@ -333,19 +331,27 @@ class DummySequencer:
   # go above the glass.
   def _step3(self):
     rospy.loginfo ("Step: Start pouring")
-    safeRemove(self.stack, constraints['taskright-wrist'])
+    safeRemove(self.stack, constraints['position_gripper_bottle'])
+    safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
+    safeRemove(self.stack, constraints['taskleft-wrist'])
     self.stack.append(constraints['position_bung_Z'])
     self.stack.append(constraints['position_bung_XY'])
     self.stack.append(constraints['angle_pouring'])
     self.stack.append(constraints['angle_gripperY_in_ground_plane'])
-    self.criticalTask = 'position_bung_Z'
+
+    # TODO: if the task already exists in the sot database, its parameters are not used: correct that, otherwise the reload does not work.
+    parameters['angle_pouring'].pos_lo = [radians(90)]
+    parameters['angle_pouring'].pos_hi = [radians(90)]
+    self.pubParam.publish(parameters['angle_pouring'])
+
+#    self.criticalTask = 'position_bung_Z'
 
 
   # pour a little
   def _step4(self):
     rospy.loginfo ("Step: Pouring more")
-    parameters['angle_pouring'].pos_lo = [radians(100)]
-    parameters['angle_pouring'].pos_hi = [radians(100)]
+    parameters['angle_pouring'].pos_lo = [radians(150)]
+    parameters['angle_pouring'].pos_hi = [radians(150)]
     self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
@@ -353,8 +359,16 @@ class DummySequencer:
   # Pour more
   def _step5(self):
     rospy.loginfo ("Step: And more")
-    parameters['angle_pouring'].pos_lo = [2.4]
-    parameters['angle_pouring'].pos_hi = [2.4]
+    parameters['angle_pouring'].pos_lo = [3.7]
+    parameters['angle_pouring'].pos_hi = [3.7]
+    self.pubParam.publish(parameters['angle_pouring'])
+    self.criticalTask = ''
+
+  # Pour more
+  def _step5b(self):
+    rospy.loginfo ("Step: And more")
+    parameters['angle_pouring'].pos_lo = [radians(100)]
+    parameters['angle_pouring'].pos_hi = [radians(100)]
     self.pubParam.publish(parameters['angle_pouring'])
     self.criticalTask = 'angle_pouring'
 
@@ -366,8 +380,9 @@ class DummySequencer:
     safeRemove(self.stack, constraints['position_bung_XY'])
     safeRemove(self.stack, constraints['angle_gripperY_in_ground_plane'])
     safeRemove(self.stack, constraints['angle_pouring'])
-    self.stack.append(constraints['taskright-wrist'])
-    self.criticalTask = 'taskright-wrist'
+    self.stack.append(constraints['robot_task_position'])
+#    self.stack.append(constraints['taskleft-wrist'])
+#    self.criticalTask = 'taskleft-wrist'
 
   """ get the critical task """
   def getCriticalTask(self):
