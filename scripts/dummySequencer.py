@@ -53,6 +53,8 @@ ground_plane = Feature('ground_plane', 'ground', Feature.PLANE,
 # Name of the feature
 l_gripper    = Feature('l_gripper', 'l_gripper', Feature.POINT,
                    Vector3(0,0,0), Vector3(0,0,0))
+l_gripper_x = Feature('l_gripper_x', 'l_gripper', Feature.VERSOR,
+                  Vector3(0,0,0), Vector3(1,0,0))
 l_gripper_y = Feature('l_gripper_y', 'l_gripper', Feature.VERSOR,
                   Vector3(0,0,0), Vector3(0,1,0))
 l_gripper_z  = Feature('l_gripper_z', 'l_gripper', Feature.VERSOR,
@@ -118,14 +120,14 @@ parameters['angle_pouring'] = ConstraintCommand(\
 constraints['angle_pouring'] = Constraint('angle_pouring', ANGLE, bung_x, ground_z, parameters['angle_pouring'])
 
 parameters['angle_pouring2'] = ConstraintCommand(\
-  'angle_pouring2', [radians(60)], [radians(60)], '', [])
+  'angle_pouring2', [radians(110)], [radians(110)], '', [0.5])
 constraints['angle_pouring2'] = Constraint('angle_pouring2', ANGLE, bung_z, ground_z, parameters['angle_pouring2'])
 
 
 # Constrain the rotation of the gripper to keep the hand horizontal 
 parameters['angle_gripperY_in_ground_plane'] = angle_gripperY_in_ground_plane_Param = ConstraintCommand(\
   'angle_gripperY_in_ground_plane', [radians(0)], [radians(0)], '', [])
-constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  ANGLE,  ground_plane, l_gripper_y, parameters['angle_gripperY_in_ground_plane'])
+constraints['angle_gripperY_in_ground_plane'] = Constraint('angle_gripperY_in_ground_plane',  ANGLE,  ground_plane, l_gripper_x, parameters['angle_gripperY_in_ground_plane'])
 
 # Distance bottle / r_hand
 parameters['distance_bottle_gripper'] = ConstraintCommand(\
@@ -214,10 +216,10 @@ class DummySequencer:
 
     self.stepList = [] 
     self.stepList.append(lambda:self.reset())
-    self.stepList.append(lambda:self._step0())
+#    self.stepList.append(lambda:self._step0())
 #    self.stepList.append(lambda:self._step2b())
     self.stepList.append(lambda:self._step3())
-    self.stepList.append(lambda:self._step4())
+#    self.stepList.append(lambda:self._step4())
     self.stepList.append(lambda:self._step5())
     self.stepList.append(lambda:self._step5b())
     self.stepList.append(lambda:self._step6())
@@ -291,6 +293,7 @@ class DummySequencer:
   def _step0(self):
     rospy.loginfo ("release position task")
     safeRemove(self.stack, constraints['robot_task_position'])
+    
 
   def _step0a(self):
     rospy.loginfo ("going in front of the bottle")
@@ -337,20 +340,20 @@ class DummySequencer:
   # go above the glass.
   def _step3(self):
     rospy.loginfo ("Step: Start pouring")
+    safeRemove(self.stack, constraints['robot_task_position'])
     safeRemove(self.stack, constraints['position_gripper_bottle'])
     safeRemove(self.stack, constraints['angle_gripperZ_bottleZ'])
     safeRemove(self.stack, constraints['taskleft-wrist'])
     self.stack.append(constraints['position_bung_Z'])
     self.stack.append(constraints['position_bung_XY'])
-    self.stack.append(constraints['angle_pouring'])
     self.stack.append(constraints['angle_gripperY_in_ground_plane'])
+    self.stack.append(constraints['angle_pouring'])
 
     # TODO: if the task already exists in the sot database, its parameters are not used: correct that, otherwise the reload does not work.
     parameters['angle_pouring'].pos_lo = [radians(90)]
     parameters['angle_pouring'].pos_hi = [radians(90)]
     self.pubParam.publish(parameters['angle_pouring'])
-
-#    self.criticalTask = 'position_bung_Z'
+    self.criticalTask = 'position_bung_Z'
 
 
   # pour a little
@@ -368,6 +371,7 @@ class DummySequencer:
     safeRemove(self.stack, constraints['angle_pouring'])
     self.stack.append(constraints['angle_pouring2'])
     self.pubParam.publish(parameters['angle_pouring2'])
+    self.criticalTask = 'angle_pouring2'
 
   # Pour more
   def _step5b(self):
