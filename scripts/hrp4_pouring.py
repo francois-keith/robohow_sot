@@ -272,6 +272,14 @@ class DummySequencer:
 
     self.stepIndex = 0
     self.pubStack.publish(ConstraintConfig('test', self.stack))
+    self.criticalTask = 'robot_task_position'
+
+    # change the critical task listened to.
+    if self.criticalTask != '':
+      if self.criticTaskListener == None:
+        self.criticTaskListener = CritiqueTaskListener(self, self.criticalTask)
+      else:
+        self.criticTaskListener.reactivateListener()
 
     self.openGripper()
     
@@ -296,7 +304,7 @@ class DummySequencer:
     self.stack.append(constraints['r_gripper_opening'])
     #fk self.solver.push(self.r_gripper_angle.task)
     #fk self.r_gripper_angle.featureDes.errorIN.value = (1,0)
-    self.criticalTask = ''
+    self.criticalTask = 'r_gripper_opening'
 #self.tasks['angle_pouring']
 
 
@@ -353,7 +361,7 @@ class DummySequencer:
     parameters['angle_pouring'].pos_lo = [2.7]
     parameters['angle_pouring'].pos_hi = [2.7]
     self.pubParam.publish(parameters['angle_pouring'])
-    self.criticalTask = ''
+    self.criticalTask = 'angle_pouring'
 
 
   # Step: going to initial position
