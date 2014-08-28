@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 ## Common Tools for the robohow > sot bridge
 import roslib
-roslib.load_manifest('robohow_common_msgs')
 import rospy
 import actionlib
 

@@ -1,0 +1,20 @@
+<package>
+  <name>robohow_sot</name>
+  <version>0.1.0</version>
+  <description>
+    This package converts constraint_msgs into commands that are directly sent
+    to the stack of tasks.
+  </description>
+  <author>Francois Keith</author>
+  <maintainer email="keith@lirmm.fr">Francois Keith</maintainer>
+  <license>BSD</license>
+  <url>...</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>robohow_common_msgs</build_depend>
+  <build_depend>dynamic_graph_bridge_msgs</build_depend>
+</package>
+
+

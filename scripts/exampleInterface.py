@@ -2,7 +2,6 @@
 
 # SoT Example Interface - only pouring task, PR2 ONLY
 import roslib #This load ROS lib
-roslib.load_manifest('robohow_common_msgs') #This load the package with the used messages
 import rospy #This load Python bindings
 
 from robohow_common_msgs.msg import ConstraintConfig, Constraint, Feature, ConstraintCommand

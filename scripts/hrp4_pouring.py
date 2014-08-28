@@ -5,7 +5,6 @@
 #  kinematics: indicates if it is only a kinematic simulation
 
 import roslib
-roslib.load_manifest('robohow_common_msgs')
 import rospy
 import actionlib #for the gripper
 
@@ -15,7 +14,6 @@ from geometry_msgs.msg import Vector3
 from numpy import radians
 from actionlib_msgs.msg import *
 
-roslib.load_manifest('pr2_controllers_msgs') # gripper msgs
 from pr2_controllers_msgs.msg import *
 
 from std_srvs.srv import Empty, EmptyResponse
