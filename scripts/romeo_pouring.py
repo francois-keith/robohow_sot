@@ -202,7 +202,8 @@ class DummySequencer:
     self.stepList = [] 
     self.stepList.append(lambda:self.reset())
     self.stepList.append(lambda:self._step0())
-#    self.stepList.append(lambda:self._step1())
+    # cancel gripper manipulation for now
+    # self.stepList.append(lambda:self._step1())
     self.stepList.append(lambda:self._step2())
     self.stepList.append(lambda:self._step2a())
     self.stepList.append(lambda:self._step3())
